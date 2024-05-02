@@ -39,8 +39,8 @@ sections:
           date_start: '2019-08-01'
           date_end: ''
           description: |2-
-              Responsibilities include:
 
+              Responsibilities include:
               * Leading team of 4 bioinformaticians and sys admins
               * Preparing slides and data packages for collaborators
               * Testing Director for the KidneySeq(TM) CLIA-certified bioinformatics pipeline
