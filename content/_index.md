@@ -38,8 +38,7 @@ sections:
           location: Iowa City, IA
           date_start: '2019-08-01'
           date_end: ''
-          description: |
-
+          description: |2-
               Responsibilities include:
          - title: Associate Research Scientist
           company: Iowa Institute of Human Genetics
