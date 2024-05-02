@@ -93,5 +93,5 @@ social:
 highlight_name: true
 ---
 
-Michael Chimenti is a research scientist with 15+ years of broad experience in the fields of bioinformatics, genomics, computational chemistry, and structural biology.  He thrives working on projects that combine computational, genomic, and experimental approaches to explore complex scientific questions.  He works as a bioinformatician and consultant data scientist in the Iowa Institute for Human Genetics.
+Michael Chimenti is a researcher with >20 years of deep experience in the fields of bioinformatics, genomics, computational chemistry, and structural biology.  He thrives working on projects that combine genomics and machine-learning approaches to explore and solve complex scientific questions.  His proven track record of success in research is attested to by over 60 first and co-author publications with more than 3000 total citations (as of 2024). He currently works as Director of the Bioinformatics Division of the Iowa Institute for Human Genetics (IIHG) and Senior Scientific Advisor for FBB-Biomed, Inc.
 {style="text-align: justify;"}
