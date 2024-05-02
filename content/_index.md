@@ -39,7 +39,7 @@ sections:
           date_start: '2019-08-01'
           date_end: ''
           description: test test test
-         - title: Associate Research Scientist
+        - title: Associate Research Scientist
           company: Iowa Institute of Human Genetics
           company_url: 'https://medicine.uiowa.edu/humangenetics/'
           company_logo: ccom-footer-logo.svg
