@@ -1,7 +1,7 @@
 ---
 # Leave the homepage title empty to use the site title
 title: ''
-date: 2022-10-24
+date: 2024-05-01
 type: landing
 
 sections:
@@ -41,10 +41,6 @@ sections:
           description: |
 
               Responsibilities include:
-              * Leading team of 4 bioinformaticians and sys admins
-              * Preparing slides and data packages for collaborators
-              * Testing Director for the KidneySeq(TM) CLIA-certified bioinformatics pipeline
-              * Creating visualizations of high-dimensional NGS data
          - title: Associate Research Scientist
           company: Iowa Institute of Human Genetics
           company_url: 'https://medicine.uiowa.edu/humangenetics/'
