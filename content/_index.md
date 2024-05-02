@@ -45,8 +45,6 @@ sections:
               * Preparing slides and data packages for collaborators
               * Testing Director for the KidneySeq(TM) CLIA-certified bioinformatics pipeline
               * Creating visualizations of high-dimensional NGS data
-              * Multi-omics analysis of genomics, clinical, and other "Omics" datasets
-              * Maintaining and evolving bioinformatic infrastructure to ensure reproducible research
          - title: Associate Research Scientist
           company: Iowa Institute of Human Genetics
           company_url: 'https://medicine.uiowa.edu/humangenetics/'
