@@ -38,12 +38,7 @@ sections:
           location: Iowa City, IA
           date_start: '2019-08-01'
           date_end: ''
-          description: |2-
-              Responsibilities include:
-
-              * Analysing
-              * Modelling
-              * Deploying
+          description: test test test
          - title: Associate Research Scientist
           company: Iowa Institute of Human Genetics
           company_url: 'https://medicine.uiowa.edu/humangenetics/'
