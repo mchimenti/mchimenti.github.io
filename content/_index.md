@@ -34,7 +34,7 @@ sections:
         - title: Director of Bioinformatics
           company: Iowa Institute of Human Genetics
           company_url: 'https://medicine.uiowa.edu/humangenetics/'
-          company_logo: ccom-footer-logo
+          company_logo: ccom_logo.png
           location: Iowa City, IA
           date_start: '2019-08-01'
           date_end: ''
@@ -42,7 +42,7 @@ sections:
         - title: Associate Research Scientist
           company: Iowa Institute of Human Genetics
           company_url: 'https://medicine.uiowa.edu/humangenetics/'
-          company_logo: ccom-footer-logo
+          company_logo: ccom_logo.png
           location: Iowa City, IA
           date_start: '2015-07-01'
           date_end: '2019-07-01'
