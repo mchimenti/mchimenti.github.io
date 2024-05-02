@@ -40,6 +40,10 @@ sections:
           date_end: ''
           description: |2-
               Responsibilities include:
+
+              * Analysing
+              * Modelling
+              * Deploying
          - title: Associate Research Scientist
           company: Iowa Institute of Human Genetics
           company_url: 'https://medicine.uiowa.edu/humangenetics/'
