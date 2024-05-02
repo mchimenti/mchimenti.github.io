@@ -33,17 +33,28 @@ sections:
       items:
         - title: Director of Bioinformatics
           company: Iowa Institute of Human Genetics
-          company_url: ''
-          company_logo: org-gc
+          company_url: 'https://medicine.uiowa.edu/humangenetics/'
+          company_logo: ccom-footer-logo.svg
           location: Iowa City, IA
-          date_start: '2015-07-01'
+          date_start: '2019-08-01'
           date_end: ''
           description: |2-
               Responsibilities include:
 
-              * Leading team of 3 analysts
-              * Collaboration with clients
-              * Analysis support
+              * Leading team of 4 bioinformaticians and sys admins
+              * Preparing slides and data packages for collaborators
+              * Testing Director for the KidneySeq(TM) CLIA-certified bioinformatics pipeline
+              * Creating visualizations of high-dimensional NGS data
+              * Multi-omics analysis of genomics, clinical, and other "-Omics" datasets
+              * Maintaining and evolving bioinformatic infrastructure to ensure reproducible research
+         - title: Associate Research Scientist
+          company: Iowa Institute of Human Genetics
+          company_url: 'https://medicine.uiowa.edu/humangenetics/'
+          company_logo: ccom-footer-logo.svg
+          location: California
+          date_start: '2015-07-01'
+          date_end: '2019-07-01'
+          description: Taught electronic engineering and researched semiconductor physics.
         - title: Scientific Advisor / Data Science consultant
           company: FBB Biomed
           company_url: 'https://fbbbio.com/'
