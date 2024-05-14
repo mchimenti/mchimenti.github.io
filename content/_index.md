@@ -40,10 +40,10 @@ sections:
           date_end: ''
           description: |2-
               Responsibilities include: 
-              * Leading and managing a team of 3 bioinformaticians
-              * Improving core revenue by adopting 'agile' project workflows
-              * Testing Director for CAP/CLIA KidneySeq targeted NGS panel
-              * Co-founding and running the UI 10X Visium Spatial Consortium
+               * Leading and managing a team of 3 bioinformaticians
+               * Improving core revenue by adopting 'agile' project workflows
+               * Testing Director for CAP/CLIA KidneySeq targeted NGS panel
+               * Co-founding and running the UI 10X Visium Spatial Consortium
         - title: Scientific Advisor & Consultant
           company: FBB Biomed
           company_url: 'https://fbbbio.com/'
@@ -52,10 +52,10 @@ sections:
           date_start: '2022-11-01'
           date_end: ''
           description: |2-
-             Responsibilities include: 
-              * Setting up and managing AWS pipelines for data analysis
-              * Exploratory data analysis and QC
-              * Creating predictive models using machine-learning 
+              Responsibilities include: 
+               * Setting up and managing AWS pipelines for data analysis
+               * Exploratory data analysis and QC
+               * Creating predictive models using machine-learning 
           - title: Associate Research Scientist
           company: Iowa Institute of Human Genetics
           company_url: 'https://medicine.uiowa.edu/humangenetics/'
@@ -65,10 +65,9 @@ sections:
           date_end: '2019-07-01'
           description: |2-
               Activities:
-
-              * Created the IIHG YouTube channel (18+ technical videos, >2500 subscribers)
-              * Collaborated on wide array of human and mouse genomics projects 
-              * Published many co-author papers in high-impact journals 
+               * Created the IIHG YouTube channel (18+ technical videos, >2500 subscribers)
+               * Collaborated on wide array of human and mouse genomics projects 
+               * Published many co-author papers in high-impact journals 
     design:
       columns: '2'
   - block: accomplishments
