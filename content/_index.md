@@ -56,7 +56,7 @@ sections:
                * Setting up and managing AWS pipelines for data analysis
                * Exploratory data analysis and QC
                * Creating predictive models using machine-learning 
-          - title: Associate Research Scientist
+        - title: Associate Research Scientist
           company: Iowa Institute of Human Genetics
           company_url: 'https://medicine.uiowa.edu/humangenetics/'
           company_logo: block_iowa_black.svg
