@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   version="1.1"
+   id="svg2"
+   width="415.39999"
+   height="120.29333"
+   viewBox="0 0 415.39999 120.29333"
+   sodipodi:docname="Block IOWA BLACK.eps"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs6" />
+  <sodipodi:namedview
+     id="namedview4"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1" />
+  <g
+     id="g8"
+     inkscape:groupmode="layer"
+     inkscape:label="ink_ext_XXXXXX"
+     transform="matrix(1.3333333,0,0,-1.3333333,0,120.29333)">
+    <g
+       id="g10"
+       transform="scale(0.1)">
+      <path
+         d="M 400.414,713.727 H 327.613 V 189.805 h 72.801 V 0 H 0 V 189.805 H 72.8008 V 713.727 H 0 V 902.238 H 400.414 V 713.727"
+         style="fill:#231f20;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="path12" />
+      <path
+         d="M 856.535,189.805 V 713.727 H 730.434 V 189.805 Z M 938.441,0 H 648.527 C 543.227,0 474.324,68.9063 474.324,182.012 v 538.215 c 0,111.804 70.199,182.011 174.203,182.011 h 289.914 c 105.299,0 174.199,-70.207 174.199,-182.011 V 182.012 C 1112.64,70.207 1042.44,0 938.441,0"
+         style="fill:#231f20;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="path14" />
+      <path
+         d="m 1226.51,713.727 h -63.71 v 188.511 h 379.62 V 713.727 h -71.51 l 65.01,-434.215 135.19,622.726 h 192.43 l 144.29,-622.726 52.02,434.215 h -66.31 v 188.511 h 374.41 V 713.727 h -62.4 L 2192.44,0 H 1886.93 L 1768.63,531.719 1647.72,0 h -293.81 l -127.4,713.727"
+         style="fill:#231f20;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="path16" />
+      <path
+         d="M 2765.8,384.816 2707.31,748.828 2647.5,384.816 Z M 2301.68,189.805 h 68.91 l 136.5,712.433 h 409.51 l 135.22,-712.433 h 63.69 V 0 H 2810 l -28.59,219.707 H 2629.3 L 2601.99,0 h -300.31 v 189.805"
+         style="fill:#231f20;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="path18" />
+    </g>
+  </g>
+</svg>

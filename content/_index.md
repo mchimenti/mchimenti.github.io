@@ -34,30 +34,41 @@ sections:
         - title: Director of Bioinformatics
           company: Iowa Institute of Human Genetics
           company_url: 'https://medicine.uiowa.edu/humangenetics/'
-          company_logo: ccom_logo.png
+          company_logo: block_iowa_black.svg
           location: Iowa City, IA
           date_start: '2019-08-01'
           date_end: ''
-          description: test test test
-        - title: Associate Research Scientist
-          company: Iowa Institute of Human Genetics
-          company_url: 'https://medicine.uiowa.edu/humangenetics/'
-          company_logo: ccom_logo.png
-          location: Iowa City, IA
-          date_start: '2015-07-01'
-          date_end: '2019-07-01'
           description: |2-
-              Responsibilities include:
-
-              * Leading team of 4 bioinformaticians and sys admins
-        - title: Scientific Advisor / Data Science consultant
+              Responsibilities include: 
+              * Leading and managing a team of 3 bioinformaticians
+              * Improving core revenue by adopting 'agile' project workflows
+              * Testing Director for CAP/CLIA KidneySeq targeted NGS panel
+              * Co-founding and running the UI 10X Visium Spatial Consortium
+        - title: Scientific Advisor & Consultant
           company: FBB Biomed
           company_url: 'https://fbbbio.com/'
           company_logo: org-x
           location: California
-          date_start: '2016-01-01'
-          date_end: '2020-12-31'
-          description: Taught electronic engineering and researched semiconductor physics.
+          date_start: '2022-11-01'
+          date_end: ''
+          description: |2-
+             Responsibilities include: 
+              * Setting up and managing AWS pipelines for data analysis
+              * Exploratory data analysis and QC
+              * Creating predictive models using machine-learning 
+          - title: Associate Research Scientist
+          company: Iowa Institute of Human Genetics
+          company_url: 'https://medicine.uiowa.edu/humangenetics/'
+          company_logo: block_iowa_black.svg
+          location: Iowa City, IA
+          date_start: '2015-07-01'
+          date_end: '2019-07-01'
+          description: |2-
+              Activities:
+
+              * Created the IIHG YouTube channel (18+ technical videos, >2500 subscribers)
+              * Collaborated on wide array of human and mouse genomics projects 
+              * Published many co-author papers in high-impact journals 
     design:
       columns: '2'
   - block: accomplishments
