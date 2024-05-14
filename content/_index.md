@@ -47,7 +47,7 @@ sections:
         - title: Scientific Advisor & Consultant
           company: FBB Biomed
           company_url: 'https://fbbbio.com/'
-          company_logo: org-x
+          company_logo: FBB_Logo_White_02-01
           location: California
           date_start: '2022-11-01'
           date_end: ''
@@ -68,12 +68,24 @@ sections:
                * Created the IIHG YouTube channel (18+ technical videos, >2500 subscribers)
                * Collaborated on wide array of human and mouse genomics projects 
                * Published many co-author papers in high-impact journals 
+        - title: Postdoctoral Scholar
+          company: University of California, San Francisco
+          company_url: 'https://www.ucsf.edu/'
+          company_logo: 
+          location: San Francisco, CA
+          date_start: '2009-07-01'
+          date_end: '2015-07-01'
+          description: |2-
+              Activities:
+               * Worked as a lead computational biologist on discovery team for novel p97 inhibitors
+               * Validated binding predictions with labeled, high molecular weight NMR measurements 
+               * Performed MD simulations of protein-protein complexes to study binding free energies
     design:
       columns: '2'
   - block: accomplishments
     content:
       # Note: `&shy;` is used to add a 'soft' hyphen in a long heading.
-      title: 'Accomplish&shy;ments'
+      title: 'Courses'
       subtitle:
       # Date format: https://docs.hugoblox.com/customization/#date-format
       date_format: Jan 2006
@@ -83,23 +95,23 @@ sections:
       #   Leave other parameters empty if not required.
       #   Begin multi-line descriptions with YAML's `|2-` multi-line prefix.
       items:
-        - certificate_url: https://www.coursera.org
+        - certificate_url: https://coursera.org/share/37bec72a5cead802f2449debe1afa0b1
           date_end: ''
-          date_start: '2021-01-25'
+          date_start: '2017-04-07'
           description: ''
           icon: coursera
           organization: Coursera
           organization_url: https://www.coursera.org
-          title: Neural Networks and Deep Learning
+          title: Statistics for Genomic Data Science
           url: ''
-        - certificate_url: https://www.edx.org
+        - certificate_url: https://coursera.org/share/baa7af433c5e063d900001bdb6928f04
           date_end: ''
-          date_start: '2021-01-01'
-          description: Formulated informed blockchain models, hypotheses, and use cases.
-          icon: edx
-          organization: edX
-          organization_url: https://www.edx.org
-          title: Blockchain Fundamentals
+          date_start: '2017-04-30'
+          description: ''
+          icon: coursera
+          organization: Coursera
+          organization_url: https://www.coursera.org
+          title: Bioconductor for Genomic Data Science
           url: https://www.edx.org/professional-certificate/uc-berkeleyx-blockchain-fundamentals
         - certificate_url: https://www.datacamp.com
           date_end: '2020-12-21'
