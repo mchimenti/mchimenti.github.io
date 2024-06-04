@@ -15,7 +15,7 @@ status:
 superuser: true
 
 # Role/position/tagline
-role: Director of Bioinformatics | Consultant | Investor
+role: Director of Bioinformatics | Consultant
 
 # Organizations/Affiliations to show in About widget
 organizations:
@@ -27,9 +27,9 @@ bio: My research interests include genomics, bioinformatics, and machine learnin
 
 # Interests to show in About widget
 interests:
-  - Genomics
-  - Computational Biology
-  - Machine Learning
+  - Multiomic data integration
+  - Mentoring junior scientists
+  - Machine learning for biomarker discovery
 
 # Education to show in About widget
 education:
@@ -93,5 +93,5 @@ social:
 highlight_name: true
 ---
 
-Michael Chimenti is a researcher with more than 15 years of deep experience in the fields of bioinformatics, genomics and structural biology.  He thrives when working on multi-disciplinary projects that combine genomics and computational approaches to explore and solve complex scientific questions.  His proven track record of success is attested to by over 60 scientific publications in top journals, accumulating more than 3000 total citations (h-index, 19). He currently works as Director of the Bioinformatics Division of the Iowa Institute for Human Genetics (IIHG) and Senior Scientific Advisor for FBB-Biomed, Inc.
+Michael Chimenti is a researcher with more than 15 years of deep experience in the fields of bioinformatics, genomics, and structural biology.  He thrives when working on multi-disciplinary projects that combine genomics and computational approaches to explore and solve complex scientific questions.  His proven track record of success is attested to by over 60 scientific publications in top journals, accumulating more than 3000 total citations (h-index, 19). He currently works as Director of the Bioinformatics Division of the Iowa Institute for Human Genetics (IIHG) and Senior Scientific Advisor for FBB-Biomed, Inc.
 {style="text-align: justify;"}
