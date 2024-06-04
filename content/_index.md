@@ -34,7 +34,7 @@ sections:
         - title: Director of Bioinformatics
           company: Iowa Institute of Human Genetics
           company_url: 'https://medicine.uiowa.edu/humangenetics/'
-          company_logo: block_iowa_black
+          company_logo: 
           location: Iowa City, IA
           date_start: '2019-08-01'
           date_end: ''
@@ -47,7 +47,7 @@ sections:
         - title: Scientific Advisor & Consultant
           company: FBB Biomed
           company_url: 'https://fbbbio.com/'
-          company_logo: FBB_Logo_White_02-01
+          company_logo: 
           location: California
           date_start: '2022-11-01'
           date_end: ''
@@ -59,7 +59,7 @@ sections:
         - title: Associate Research Scientist
           company: Iowa Institute of Human Genetics
           company_url: 'https://medicine.uiowa.edu/humangenetics/'
-          company_logo: block_iowa_black
+          company_logo: 
           location: Iowa City, IA
           date_start: '2015-07-01'
           date_end: '2019-07-01'
