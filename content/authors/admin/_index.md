@@ -49,27 +49,27 @@ skills:
     color: '#0066CC'  
     items:
       - name: R
-        percent: 10
+        percent: 100
         icon: rstudio
         icon_pack: devicon
       - name: Python
-        percent: 10
+        percent: 100
         icon: python
         icon_pack: fab
       - name: Bash/Shell
-        percent: 10
+        percent: 100
         icon: terminal
         icon_pack: fas
   - name: Bioinformatics
     color: '#449944'
     items:
-      - name: NGS Analysis
+      - name: NGS Pipelines
         icon: dna
         icon_pack: fas
-      - name: Variant Calling
+      - name: Exome & Whole Genome
         icon: database
         icon_pack: fas
-      - name: RNA-seq
+      - name: Transcriptomics
         icon: chart-line
         icon_pack: fas
   - name: Cloud & DevOps
@@ -84,7 +84,21 @@ skills:
       - name: Git
         icon: git
         icon_pack: fab
-  
+  - name: Communication
+    color: '#6A5ACD'
+    items:
+      - name: Technical Writing
+        percent: 100
+        icon: file-text
+        icon_pack: fas
+      - name: Public Speaking
+        percent: 100
+        icon: microphone
+        icon_pack: fas
+      - name: Teaching
+        percent: 100
+        icon: chalkboard-teacher
+        icon_pack: fas
 
 # Social/Academic Networking
 # For available icons, see: https://docs.hugoblox.com/getting-started/page-builder/#icons
