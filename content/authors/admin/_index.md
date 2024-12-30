@@ -45,23 +45,42 @@ education:
 # Skills
 # For available icons, see: https://docs.hugoblox.com/getting-started/page-builder/#icons
 skills:
-  - name: Technical
+  - name: Programming Languages
+    color: '#0066CC'  
     items:
       - name: R
-        description: ''
-        percent: 80
         icon: rstudio
         icon_pack: devicon
-      - name: Data Science
-        description: ''
-        percent: 50
-        icon: chart-line
+      - name: Python
+        icon: python
+        icon_pack: fab
+      - name: Bash/Shell
+        icon: terminal
         icon_pack: fas
-      - name: AWS
-        description: ''
-        percent: 30
+  - name: Bioinformatics
+    color: '#449944'
+    items:
+      - name: NGS Analysis
+        icon: dna
+        icon_pack: fas
+      - name: Variant Calling
         icon: database
         icon_pack: fas
+      - name: RNA-seq
+        icon: chart-line
+        icon_pack: fas
+  - name: Cloud & DevOps
+    color: '#994444'
+    items:
+      - name: AWS
+        icon: aws
+        icon_pack: fab
+      - name: Docker
+        icon: docker
+        icon_pack: fab
+      - name: Git
+        icon: git
+        icon_pack: fab
   
 
 # Social/Academic Networking
