@@ -49,12 +49,15 @@ skills:
     color: '#0066CC'  
     items:
       - name: R
+        percent: 10
         icon: rstudio
         icon_pack: devicon
       - name: Python
+        percent: 10
         icon: python
         icon_pack: fab
       - name: Bash/Shell
+        percent: 10
         icon: terminal
         icon_pack: fas
   - name: Bioinformatics
