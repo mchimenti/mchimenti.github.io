@@ -1,7 +1,7 @@
 ---
-title: Perturbation analysis of spatial single cell RNA-seq with 'augur'
+title: "Perturbation analysis of spatial single cell RNA-seq with 'augur'"
 date: '2021-11-09'
-summary: Easily blog from Jupyter notebooks!
+summary: ""
 ---
 
 
@@ -20,7 +20,7 @@ With the integrated, clustered and, assigned dataset in hand, I was ready to ent
 
 ## Import the notebooks into your site
 
-```{r}
+```r
 library(Augur)
 DefaultAssay(s1s2.int) <- "SCT"
 augur <- Augur::calculate_auc(s1s2.int, label_col = "orig.ident", cell_type_col = "cell_type", 
@@ -34,7 +34,7 @@ Above, you can see the actual call to augur "calculate_auc" method. I found that
 
 When the algorithm completes, you can visualize your results. Using the vignette for regular scRNA-seq you can do this:
 
-```{r}
+```r
 library(patchwork)
 p1 <- plot_umap(augur, s1s2.int, mode = "default", palette = "Spectral")
 p1 <- p1 + geom_point(size=0.1) + ggtitle("Augur Perturbation by Type (Red = Most)")
