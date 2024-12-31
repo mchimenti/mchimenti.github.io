@@ -48,7 +48,7 @@ skills:
   - name: Programming Languages
     color: '#0066CC'  
     items:
-      - name: R
+      - name: R (CRAN/Bioconductor/RStudio)
         percent: 100
         icon: rstudio
         icon_pack: devicon
