@@ -75,7 +75,7 @@ skills:
   - name: Cloud & DevOps
     color: '#994444'
     items:
-      - name: AWS
+      - name: AWS (S3/Lambda/Cloudwatch/Healthomics)
         icon: aws
         icon_pack: fab
       - name: Docker
