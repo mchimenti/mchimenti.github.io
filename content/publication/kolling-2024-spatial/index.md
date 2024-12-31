@@ -18,7 +18,7 @@ image:
   caption: 'Spatial transcriptomics analysis of the dorsal raphe nucleus'
   focal_point: 'Center'  # Options: Smart, Center, TopLeft, Top, TopRight, Left, Right, BottomLeft, Bottom, BottomRight
   preview_only: false
-  url: 'https://journals.sagepub.com/cms/10.1177/13872877241299119/asset/images/large/10.1177_13872877241299119-fig1.jpeg'
+  
 
 abstract: |
   **Background**
