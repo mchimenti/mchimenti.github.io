@@ -224,9 +224,9 @@ sections:
       title: Contact
       subtitle:
       text: |-
-        Contact information and office location:
-      email: michael.chimenti@gmail.com
-      phone: 319-335-6717
+        Contact information and University of Iowa office location:
+      email: michael dot chimenti AT gmail dot com
+      phone: 319-335-6717 (University)
       address:
         street: 431 Newton Road
         city: Iowa City
