@@ -225,7 +225,6 @@ sections:
       subtitle:
       text: |-
         Contact information and office location:
-      # Contact (add or remove contact options as necessary)
       email: michael.chimenti@gmail.com
       phone: 319-335-6717
       address:
@@ -236,11 +235,9 @@ sections:
         country: United States
         country_code: US
       directions: Enter EMRB and take the North elevator to the third floor.  My office is 329A.
-      # Choose a map provider in `params.yaml` to show a map from these coordinates
       coordinates:
         latitude: '41.66199'
         longitude: '-91.54529'  
-      # Automatically link email and phone or display as text?
       autolink: true
     design:
       columns: '2'
