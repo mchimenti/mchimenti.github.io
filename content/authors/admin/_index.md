@@ -129,14 +129,20 @@ social:
 highlight_name: true
 ---
 
+<div class="text-sm>
+
 I am a researcher with more than 15 years of deep experience in the fields of bioinformatics, genomics, and structural biology. I thrive when working on multi-disciplinary projects that combine genomics and computational approaches to explore and solve complex scientific questions.
 
-# Vision and Mission
+## Vision and Mission
 I aim to accelerate biomedical discovery through the application of cutting-edge computational methods and data visualization. My focus is on building robust platforms for genomic data analysis that enable better decision-making in both research and clinical settings.
 
-# Leadership 
+## Leadership 
 As Director of the Bioinformatics Division at IIHG and Senior Scientific Advisor for FBB-Biomed, I lead cross-functional teams in developing innovative solutions for complex biological problems. My proven track record includes over 60 scientific publications in top journals, accumulating more than 3000 total citations (h-index, 19).
 
-# Community
+I am a co-founder of the UI Spatial Transcriptomics Consortium and Co-Director of the Hawk-IDDRC Developmental Genomics Core.
+
+## Community
 I'm dedicated to mentoring the next generation of bioinformaticians and fostering collaboration across disciplines. This includes creating and maintaining the IIHG YouTube channel with technical tutorials (18+ videos, >2500 subscribers) and active participation in professional development initiatives.
 {style="text-align: justify;"}
+
+</div>
