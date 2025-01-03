@@ -105,7 +105,7 @@ sections:
           organization: Amazon Web Services
           organization_url: https://aws.amazon.com
           title: AWS Cloud Practitioner Essentials
-          icon: aws
+          icon: fab fa-aws
           url: ''
 
         - certificate_url: 
