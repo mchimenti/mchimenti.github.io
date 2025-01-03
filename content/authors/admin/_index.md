@@ -145,7 +145,7 @@ I am also a Co-founder of the **UI Spatial Transcriptomics Consortium** and Co-D
 
 **Consulting**
 
-I'm dedicated to applying my knowledge and experience to help early-stage biotech companies in the genomics space collate, organize, and make sense of their sequencing and assay data.  I have 2+ years of experience consulting in this space, and have helped my clients file 2 major patents in the liquid biopsy diagnostics space.  
+I help early-stage "startup" biotech companies working in the genomics and diagnostics space organize, analyze and interpret their genomic sequencing and assay data.  I have 2+ years of experience consulting in this space.  Along the way I have helped my clients file 2 major provisional patents creating significant value for founders and investors.   
 {style="text-align: justify;"}
 
 *Member, International Society of Computational Biologists (ISCB) 2015-present* 
