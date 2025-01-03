@@ -110,52 +110,13 @@ sections:
 
         - certificate_url: 
           date_end: ''
-          date_start: '2022-01-01'
-          description: ''
-          organization: LinkedIn
-          organization_url: https://www.linkedin.com
-          title: Project Management Foundations; Schedules
-          icon: linkedin
-          url: ''
-
-        - certificate_url: 
-          date_end: ''
-          date_start: '2022-01-01'
-          description: ''
-          organization: LinkedIn
-          organization_url: https://www.linkedin.com
-          title: Project Management Foundations; Teams
-          icon: linkedin
-          url: ''
-
-        - certificate_url: 
-          date_end: ''
           date_start: '2021-12-01'
           description: ''
           organization: LinkedIn
           organization_url: https://www.linkedin.com
           title: Project Management Foundations
-          icon: linkedin
-          url: ''
-
-        - certificate_url: 
-          date_end: ''
-          date_start: '2021-12-01'
-          description: ''
-          organization: LinkedIn
-          organization_url: https://www.linkedin.com
-          title: Project Management Foundations; Ethics
-          icon: linkedin
-          url: ''
-
-        - certificate_url: 
-          date_end: ''
-          date_start: '2021-12-01'
-          description: ''
-          organization: LinkedIn
-          organization_url: https://www.linkedin.com
-          title: Project Management Foundations; Requirements
-          icon: linkedin
+          icon: linkedin-in
+          icon_pack: fab
           url: ''
 
         - certificate_url: 
@@ -165,7 +126,8 @@ sections:
           organization: LinkedIn
           organization_url: https://www.linkedin.com
           title: Leadership; Practical Skills
-          icon: linkedin
+          icon: linkedin-in
+          icon_pack: fab
           url: ''
 
         - certificate_url: 
@@ -175,7 +137,8 @@ sections:
           organization: LinkedIn
           organization_url: https://www.linkedin.com
           title: Strategic Thinking
-          icon: linkedin
+          icon: linkedin-in
+          icon_pack: fab
           url: ''
 
         - certificate_url: 
