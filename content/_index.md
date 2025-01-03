@@ -101,11 +101,12 @@ sections:
         - certificate_url: 
           date_end: '2025-06-30'
           date_start: '2023-06-01'
-          description: 'Skills: AWS · Cloud Computing · Amazon S3 · Amazon EC2'
+          description: 'AWS · Cloud Computing · Amazon S3 · Amazon EC2'
           organization: Amazon Web Services (AWS)
           organization_url: https://aws.amazon.com
           title: AWS Cloud Practitioner Essentials
           icon: aws
+          icon_pack: fab
           url: ''
 
         - certificate_url: 
@@ -115,8 +116,8 @@ sections:
           organization: LinkedIn
           organization_url: https://www.linkedin.com
           title: Project Management Foundations
-          icon: linkedin-in
-          icon_pack: fab
+          icon: certificate
+          icon_pack: fas
           url: ''
 
         - certificate_url: 
@@ -126,8 +127,8 @@ sections:
           organization: LinkedIn
           organization_url: https://www.linkedin.com
           title: Leadership; Practical Skills
-          icon: linkedin-in
-          icon_pack: fab
+          icon: certificate
+          icon_pack: fas
           url: ''
 
         - certificate_url: 
@@ -137,8 +138,8 @@ sections:
           organization: LinkedIn
           organization_url: https://www.linkedin.com
           title: Strategic Thinking
-          icon: linkedin-in
-          icon_pack: fab
+          icon: certificate
+          icon_pack: fas
           url: ''
 
         - certificate_url: 
