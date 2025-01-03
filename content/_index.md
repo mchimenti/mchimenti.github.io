@@ -190,6 +190,7 @@ sections:
       columns: '2'
       view: card
   - block: collection
+    id: recent
     content:
       title: Recent Publications
       text: |-
@@ -225,8 +226,8 @@ sections:
       subtitle:
       text: |-
         Contact information and University of Iowa office location:
-      email: michael dot chimenti AT gmail dot com
-      phone: 319-335-6717 (University)
+      email: michael dot chimenti at gmail dot com
+      phone: 319-335-6717 (University Office)
       address:
         street: 431 Newton Road
         city: Iowa City
@@ -234,7 +235,7 @@ sections:
         postcode: '52242'
         country: United States
         country_code: US
-      directions: Enter EMRB and take the North elevator to the third floor.  My office is 329A.
+      directions: Go to EMRB on the West Side of Campus and take the North elevator to the 3rd floor.  My office is 329A.
       coordinates:
         latitude: '41.66199'
         longitude: '-91.54529'  
