@@ -115,7 +115,7 @@ sections:
           organization: LinkedIn
           organization_url: https://www.linkedin.com
           title: Project Management Foundations
-          icon: linkedin-in
+          icon: graduation-cap
           icon_pack: fas
           url: ''
 
