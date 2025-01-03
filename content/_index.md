@@ -102,11 +102,10 @@ sections:
           date_end: '2025-06-30'
           date_start: '2023-06-01'
           description: 'AWS · Cloud Computing · Amazon S3 · Amazon EC2'
-          organization: Amazon Web Services (AWS)
+          organization: Amazon Web Services
           organization_url: https://aws.amazon.com
           title: AWS Cloud Practitioner Essentials
           icon: aws
-          icon_pack: fab
           url: ''
 
         - certificate_url: 
@@ -116,8 +115,7 @@ sections:
           organization: LinkedIn
           organization_url: https://www.linkedin.com
           title: Project Management Foundations
-          icon: certificate
-          icon_pack: fas
+          icon: linkedin
           url: ''
 
         - certificate_url: 
@@ -126,9 +124,8 @@ sections:
           description: ''
           organization: LinkedIn
           organization_url: https://www.linkedin.com
-          title: Leadership; Practical Skills
-          icon: certificate
-          icon_pack: fas
+          title: Leadership, Practical Skills
+          icon: linkedin
           url: ''
 
         - certificate_url: 
@@ -138,8 +135,7 @@ sections:
           organization: LinkedIn
           organization_url: https://www.linkedin.com
           title: Strategic Thinking
-          icon: certificate
-          icon_pack: fas
+          icon: linkedin
           url: ''
 
         - certificate_url: 
@@ -159,16 +155,6 @@ sections:
           organization: Coursera
           organization_url: https://www.coursera.org
           title: Statistics for Genomic Data Science
-          icon: coursera
-          url: ''
-
-        - certificate_url: 
-          date_end: ''
-          date_start: '2017-03-01'
-          description: 'Credential ID KJJY7WFLZCBF'
-          organization: Coursera
-          organization_url: https://www.coursera.org
-          title: Bioconductor for Genomic Data Science
           icon: coursera
           url: ''
 
