@@ -115,8 +115,8 @@ sections:
           organization: LinkedIn
           organization_url: https://www.linkedin.com
           title: Project Management Foundations
-          icon: graduation-cap
-          icon_pack: fas
+          icon: linkedin
+          icon_pack: fab
           url: ''
 
         - certificate_url: 
@@ -127,6 +127,7 @@ sections:
           organization_url: https://www.linkedin.com
           title: Leadership, Practical Skills
           icon: linkedin
+          icon_pack: fab
           url: ''
 
         - certificate_url: 
@@ -137,6 +138,7 @@ sections:
           organization_url: https://www.linkedin.com
           title: Strategic Thinking
           icon: linkedin
+          icon_pack: fab
           url: ''
 
         - certificate_url: 
