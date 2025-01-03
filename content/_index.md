@@ -88,7 +88,7 @@ sections:
     id: courses
     content:
       # Note: `&shy;` is used to add a 'soft' hyphen in a long heading.
-      title: 'Courses'
+      title: 'Certifications & Courses'
       subtitle:
       # Date format: https://docs.hugoblox.com/customization/#date-format
       date_format: Jan 2006
@@ -98,6 +98,136 @@ sections:
       #   Leave other parameters empty if not required.
       #   Begin multi-line descriptions with YAML's `|2-` multi-line prefix.
       items:
+        - certificate_url: 
+          date_end: '2025-06-30'
+          date_start: '2023-06-01'
+          description: 'Skills: AWS · Cloud Computing · Amazon S3 · Amazon EC2'
+          organization: Amazon Web Services (AWS)
+          organization_url: https://aws.amazon.com
+          title: AWS Cloud Practitioner Essentials
+          icon: aws
+          url: ''
+
+        - certificate_url: 
+          date_end: ''
+          date_start: '2022-01-01'
+          description: ''
+          organization: LinkedIn
+          organization_url: https://www.linkedin.com
+          title: Project Management Foundations; Schedules
+          icon: linkedin
+          url: ''
+
+        - certificate_url: 
+          date_end: ''
+          date_start: '2022-01-01'
+          description: ''
+          organization: LinkedIn
+          organization_url: https://www.linkedin.com
+          title: Project Management Foundations; Teams
+          icon: linkedin
+          url: ''
+
+        - certificate_url: 
+          date_end: ''
+          date_start: '2021-12-01'
+          description: ''
+          organization: LinkedIn
+          organization_url: https://www.linkedin.com
+          title: Project Management Foundations
+          icon: linkedin
+          url: ''
+
+        - certificate_url: 
+          date_end: ''
+          date_start: '2021-12-01'
+          description: ''
+          organization: LinkedIn
+          organization_url: https://www.linkedin.com
+          title: Project Management Foundations; Ethics
+          icon: linkedin
+          url: ''
+
+        - certificate_url: 
+          date_end: ''
+          date_start: '2021-12-01'
+          description: ''
+          organization: LinkedIn
+          organization_url: https://www.linkedin.com
+          title: Project Management Foundations; Requirements
+          icon: linkedin
+          url: ''
+
+        - certificate_url: 
+          date_end: ''
+          date_start: '2021-11-01'
+          description: ''
+          organization: LinkedIn
+          organization_url: https://www.linkedin.com
+          title: Leadership; Practical Skills
+          icon: linkedin
+          url: ''
+
+        - certificate_url: 
+          date_end: ''
+          date_start: '2021-11-01'
+          description: ''
+          organization: LinkedIn
+          organization_url: https://www.linkedin.com
+          title: Strategic Thinking
+          icon: linkedin
+          url: ''
+
+        - certificate_url: 
+          date_end: ''
+          date_start: '2017-06-01'
+          description: 'Credential ID 6C4ZL9TX8UKR'
+          organization: Coursera
+          organization_url: https://www.coursera.org
+          title: Algorithms for DNA Sequencing
+          icon: coursera
+          url: ''
+
+        - certificate_url: 
+          date_end: ''
+          date_start: '2017-04-01'
+          description: 'Credential ID KGF9XRS9SNEG'
+          organization: Coursera
+          organization_url: https://www.coursera.org
+          title: Statistics for Genomic Data Science
+          icon: coursera
+          url: ''
+
+        - certificate_url: 
+          date_end: ''
+          date_start: '2017-03-01'
+          description: 'Credential ID KJJY7WFLZCBF'
+          organization: Coursera
+          organization_url: https://www.coursera.org
+          title: Bioconductor for Genomic Data Science
+          icon: coursera
+          url: ''
+
+        - certificate_url: 
+          date_end: ''
+          date_start: '2017-03-01'
+          description: 'Credential ID AM2TQJTGHVY6'
+          organization: Coursera
+          organization_url: https://www.coursera.org
+          title: Python for Genomic Data Science
+          icon: coursera
+          url: ''
+
+        - certificate_url: 
+          date_end: ''
+          date_start: '2017-01-01'
+          description: 'Credential ID NL572ZC3TS9G'
+          organization: Coursera
+          organization_url: https://www.coursera.org
+          title: Introduction to Genomic Technologies
+          icon: coursera
+          url: ''
+
         - certificate_url: https://coursera.org/share/37bec72a5cead802f2449debe1afa0b1
           date_end: ''
           date_start: '2017-04-07'
@@ -107,6 +237,7 @@ sections:
           organization_url: https://www.coursera.org
           title: Statistics for Genomic Data Science
           url: ''
+
         - certificate_url: https://coursera.org/share/baa7af433c5e063d900001bdb6928f04
           date_end: ''
           date_start: '2017-04-30'
@@ -116,6 +247,7 @@ sections:
           organization_url: https://www.coursera.org
           title: Bioconductor for Genomic Data Science
           url: https://www.edx.org/professional-certificate/uc-berkeleyx-blockchain-fundamentals
+
         - certificate_url: https://www.datacamp.com
           date_end: '2020-12-21'
           date_start: '2020-07-01'
@@ -125,6 +257,7 @@ sections:
           organization_url: https://www.datacamp.com
           title: 'Object-Oriented Programming in R'
           url: ''
+        
     design:
       columns: '2'
   - block: collection
