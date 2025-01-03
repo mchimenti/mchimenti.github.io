@@ -129,11 +129,9 @@ social:
 highlight_name: true
 ---
 
-I am a research scientist with 20 years of deep experience in the fields of bioinformatics, genomics, and structural biology. I thrive when working on multi-disciplinary projects that combine genomics and computational (ML/AI) approaches to explore and solve complex scientific questions.  I received world-class foundational training in biophysics during my PhD, made the leap to computational chemistry to work on drug discovery as a postdoc, and now work as a computational biologist and data scientist. 
+Hello! I am a research scientist with 20 years of deep experience in the fields of bioinformatics, genomics, and structural biology. I thrive when working on multi-disciplinary projects that combine genomics and computational (ML/AI) approaches to explore and solve complex scientific questions.  
 
-*Member, International Society of Computational Biologists (ISCB) 2015-present* 
-
-*Member, Association of Biomolecular Research Facilities (ABRF) 2023-present*
+I received world-class PhD training in biophysics, made the leap to computational chemistry to work on drug discovery as a postdoc, and now work as a computational biologist and data scientist. 
 
 **Mission**
 
@@ -145,8 +143,11 @@ As Director of the Bioinformatics Division at IIHG and Senior Scientific Advisor
 
 I am also a Co-founder of the **UI Spatial Transcriptomics Consortium** and Co-Director of the **Hawk-IDDRC Developmental Genomics Core**.
 
-**Community**
+**Consulting**
 
-I'm dedicated to mentoring the next generation of bioinformaticians and fostering collaboration across disciplines. This includes creating and maintaining the IIHG YouTube channel with technical tutorials (18+ videos, >2500 subscribers) and active participation in professional development initiatives for talented graduate students.
+I'm dedicated to applying my knowledge and experience to help early-stage biotech companies in the genomics space collate, organize, and make sense of their sequencing and assay data.  I have 2+ years of experience consulting in this space, and have helped my clients file 2 major patents in the liquid biopsy diagnostics space.  
 {style="text-align: justify;"}
 
+*Member, International Society of Computational Biologists (ISCB) 2015-present* 
+
+*Member, Association of Biomolecular Research Facilities (ABRF) 2023-present*
