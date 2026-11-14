@@ -133,6 +133,15 @@ html,body{margin:0;height:100%;overflow:hidden;font-family:"Segoe UI",Tahoma,Ari
 .asgbar{display:flex;gap:10px;align-items:center;margin:8px 0;flex-wrap:wrap;font-size:12px}
 .asgbar button{padding:4px 12px}
 .zoomb{cursor:pointer;border:none;background:none;font-size:13px}
+
+#poptWin{left:30px;top:50px;width:762px}
+#poptCanvas{display:block;background:#fff;cursor:pointer;width:760px;height:270px}
+#poptFoot{padding:6px 8px;display:flex;gap:8px;align-items:center;font-size:11.5px;flex-wrap:wrap;min-height:34px}
+#poptFoot button{padding:3px 8px}
+#app{overflow:hidden}
+#sw{min-height:0;height:100vh;overflow:hidden}
+#workspace{overflow:hidden}
+#console{height:100vh}
 </style>
 </head>
 <body>
@@ -153,6 +162,9 @@ html,body{margin:0;height:100%;overflow:hidden;font-family:"Segoe UI",Tahoma,Ari
         <div data-cmd="lockdisp">Lock display<span>lockdisp</span></div>
         <div data-cmd="topshim">Shim (gradient)<span>topshim</span></div>
         <div data-cmd="atma">Tune / match probe<span>atma</span></div>
+        <div data-cmd="getprosol">Load probe pulse defaults<span>getprosol</span></div>
+        <div data-cmd="pulsecal">Automatic pulse calibration<span>pulsecal</span></div>
+        <div data-cmd="paropt">P1 array (pulse calibration)<span>paropt</span></div>
         <div data-cmd="rga">Receiver gain<span>rga</span></div>
         <div data-cmd="expt">Experiment time<span>expt</span></div>
         <div data-cmd="zg">Start acquisition<span>zg</span></div>
@@ -179,7 +191,7 @@ html,body{margin:0;height:100%;overflow:hidden;font-family:"Segoe UI",Tahoma,Ari
         <div data-cmd="about">About<span></span></div></div></div>
     </div>
     <div id="toolbar">
-      <button data-cmd="lockdisp">Lock disp</button><button data-cmd="lock">Lock</button><button data-cmd="topshim">TopShim</button><button data-cmd="atma">ATMA</button><button data-cmd="rga">RGA</button><button data-cmd="zg">ZG</button><button data-cmd="halt">Halt</button>
+      <button data-cmd="lockdisp">Lock disp</button><button data-cmd="lock">Lock</button><button data-cmd="topshim">TopShim</button><button data-cmd="atma">ATMA</button><button data-cmd="paropt">P1 cal</button><button data-cmd="rga">RGA</button><button data-cmd="zg">ZG</button><button data-cmd="halt">Halt</button>
       <span class="sep"></span>
       <button data-cmd="efp">efp</button><button data-cmd="apk">apk</button><button data-cmd=".ph">Phase</button><button data-cmd="abs">abs</button><button data-cmd=".cal">Calib</button><button data-cmd="pp">Peaks</button>
       <span class="sep"></span>
@@ -202,6 +214,8 @@ html,body{margin:0;height:100%;overflow:hidden;font-family:"Segoe UI",Tahoma,Ari
           <div class="view pview" id="vTitle"><div id="titleBody" style="padding:16px;font-family:Consolas,monospace;line-height:1.7"></div></div>
           <div class="view pview" id="vAssign"></div>
           <div class="fwin" id="lockWin"><div class="fh"><span>Lock Display</span><span class="x" data-close="lockWin">✕</span></div><canvas id="lockCanvas" width="398" height="210"></canvas><div id="lockFoot"><span id="lockMode">SWEEP</span><span id="lockLvlTxt">Level: —</span></div></div>
+          <div class="fwin" id="poptWin" style="display:none"><div class="fh"><span>paropt — P1 array</span><span class="x" data-close="poptWin">✕</span></div>
+            <canvas id="poptCanvas" width="760" height="270"></canvas><div id="poptFoot">Run <code>paropt</code> to acquire a P1 series.</div></div>
           <div class="fwin" id="phaseWin"><div class="fh"><span>Phase correction</span><span class="x" id="phClose">✕</span></div>
             <div class="row" style="font-size:11px;color:#444">Pivot at the tallest peak (red line). Drag sliders or type values.</div>
             <div class="row"><b>PH0</b><input type="range" id="ph0" min="-180" max="180" step="0.1"><input class="val" id="ph0v"></div>
@@ -262,7 +276,7 @@ html,body{margin:0;height:100%;overflow:hidden;font-family:"Segoe UI",Tahoma,Ari
           <div id="rackLbl">click tube to pick up</div></div>
         <div class="meter"><span style="width:22px">He</span><div class="bar"><i id="heBar" style="width:71%"></i></div><span id="heTxt">71%</span></div>
         <div class="meter"><span style="width:22px">N₂</span><div class="bar"><i id="n2Bar" style="width:63%;background:#9bd"></i></div><span id="n2Txt">63%</span></div>
-        <div style="color:#8a939d;line-height:1.4">Air: <b id="airTxt">OFF</b><br>Sample: <b id="smpTxt">in rack</b><br>Probe temp: <b>298.0 K</b></div>
+        <div style="color:#8a939d;line-height:1.4">Air: <b id="airTxt">OFF</b><br>Sample: <b id="smpTxt">in rack</b><br>Probe: <b>298.0 K</b> · Sample: <b id="tempTxt">295.5 K</b></div>
       </div></div></div>
     <div class="panel" id="sndRow"><button class="cbtn on" id="bSnd" style="min-width:70px"><span class="dot"></span>SOUND</button><span>Vol</span><input type="range" id="vol" min="0" max="1" step="0.05" value="0.7"></div>
   </div>
@@ -291,72 +305,125 @@ const NMR = (() => {
   function gauss(r) { let u = 0; while (u === 0) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
 
   // ---------- voxel grid of the sample inside the RF coil ----------
-  const VOX = (() => {
-    const NZ = 44, NR = 5, NT = 8, a = 0.22; // a = tube radius / coil half-length
+  // Coordinates: z in units of the RF-coil half-length, coil centred at z = 0.
+  // geom: { top, bot }  sample liquid extent (coil units)
+  //       dz0           offset of the shim-coil origin from the RF-coil centre (instrument constant)
+  //       sus           strength (Hz) of the susceptibility jump at the meniscus / tube bottom
+  // Shim coils are slightly impure: Z2 contains some Z, Z3 some Z, Z4 some Z2, Z5 some Z3.
+  const IMPURITY = { Z2: { Z1: 0.06 }, Z3: { Z1: 0.10 }, Z4: { Z2: 0.08 }, Z5: { Z3: 0.08 } };
+  const DEFAULT_GEOM = { top: 1.4, bot: -1.4, dz0: 0.12, sus: 4.0 };
+  function makeVox(geom = DEFAULT_GEOM) {
+    const g = { ...DEFAULT_GEOM, ...geom };
+    const NZ = 64, NR = 5, NT = 8, a = 0.22; // a = tube radius / coil half-length
+    const zlo = Math.max(-1.8, g.bot), zhi = Math.min(1.8, g.top);
     const n = NZ * NR * NT;
     const w = new Float64Array(n), resid = new Float64Array(n);
     const basis = {}; SHIMS.forEach(s => basis[s] = new Float64Array(n));
+    const off = new Float64Array(n); // marks off-axis voxels (unused for now)
     let i = 0, wsum = 0;
     for (let iz = 0; iz < NZ; iz++) {
-      const z = -1.3 + 2.6 * (iz + 0.5) / NZ;
-      const sens = 1 / (1 + Math.pow(z / 0.92, 8));
+      const z = zlo + (zhi - zlo) * (iz + 0.5) / NZ;
+      const sens = 1 / (1 + Math.pow(z / 0.92, 8)) * (zhi - zlo) / 2.6;
+      const zs = z + g.dz0; // position in the shim coils' frame
+      const sus = g.sus * (Math.exp(-(g.top - z) / 0.18) - 0.6 * Math.exp(-(z - g.bot) / 0.18));
       for (let ir = 0; ir < NR; ir++) {
         const r = Math.sqrt((ir + 0.5) / NR);
         for (let it = 0; it < NT; it++, i++) {
           const th = 2 * Math.PI * (it + 0.5) / NT + ir * 0.37;
           const x = r * Math.cos(th), y = r * Math.sin(th), rho2 = a * a * r * r;
           w[i] = sens; wsum += sens;
-          basis.Z1[i] = z;
-          basis.Z2[i] = z * z - rho2 / 2 - 0.33;
-          basis.Z3[i] = z * z * z - 1.5 * z * rho2;
-          basis.Z4[i] = Math.pow(z, 4) - 3 * z * z * rho2 + 0.375 * rho2 * rho2 - 0.2;
-          basis.Z5[i] = Math.pow(z, 5) - 5 * Math.pow(z, 3) * rho2 + 1.875 * z * rho2 * rho2;
-          basis.X[i] = x; basis.Y[i] = y;
-          basis.XZ[i] = x * z; basis.YZ[i] = y * z;
-          basis.XY[i] = 2 * x * y; basis.X2Y2[i] = x * x - y * y;
-          // uncorrectable residual (higher orders / susceptibility)
-          resid[i] = 0.10 * Math.pow(z, 6) + 0.05 * Math.sin(3 * th) * r * r * r;
+          const B = {
+            Z1: zs, Z2: zs * zs - rho2 / 2 - 0.33, Z3: zs * zs * zs - 1.5 * zs * rho2,
+            Z4: Math.pow(zs, 4) - 3 * zs * zs * rho2 + 0.375 * rho2 * rho2 - 0.2,
+            Z5: Math.pow(zs, 5) - 5 * Math.pow(zs, 3) * rho2 + 1.875 * zs * rho2 * rho2,
+            X: x, Y: y, XZ: x * zs, YZ: y * zs, XY: 2 * x * y, X2Y2: x * x - y * y
+          };
+          for (const s of SHIMS) {
+            let v = B[s];
+            if (IMPURITY[s]) for (const [t, f] of Object.entries(IMPURITY[s])) v += f * B[t];
+            basis[s][i] = v;
+          }
+          // uncorrectable residual (higher orders) + susceptibility at the sample ends
+          resid[i] = 0.10 * Math.pow(z, 6) * (Math.abs(z) < 1.3 ? 1 : 0) + 0.05 * Math.sin(3 * th) * r * r * r + sus;
+          off[i] = r;
         }
       }
     }
-    return { n, w, wsum, basis, resid };
-  })();
+    return { n, w, wsum, basis, resid, geom: g };
+  }
+  const VOX = makeVox();
 
-  // field offsets (Hz, 1H) for every voxel
-  function fieldDeltas(shimErr, spin) {
-    const d = new Float64Array(VOX.n); d.set(VOX.resid);
+  // field offsets (Hz, 1H) for every voxel; spinning averages the off-axis terms and produces sidebands
+  function fieldDeltas(shimErr, spin, vox = VOX) {
+    const d = new Float64Array(vox.n); d.set(vox.resid);
+    const offF = spin ? new Float64Array(vox.n) : null;
     for (const s of SHIMS) {
-      let k = HZ_PER_UNIT[s] * (shimErr[s] || 0);
+      const k = HZ_PER_UNIT[s] * (shimErr[s] || 0);
       if (!k) continue;
-      if (spin && !AXIAL.has(s)) k *= 0.12;
-      const b = VOX.basis[s];
-      for (let i = 0; i < d.length; i++) d[i] += k * b[i];
+      const b = vox.basis[s];
+      if (spin && !AXIAL.has(s)) { for (let i = 0; i < d.length; i++) { d[i] += 0.12 * k * b[i]; offF[i] += k * b[i]; } }
+      else for (let i = 0; i < d.length; i++) d[i] += k * b[i];
     }
-    let m = 0; for (let i = 0; i < d.length; i++) m += VOX.w[i] * d[i];
-    m /= VOX.wsum;
+    let m = 0; for (let i = 0; i < d.length; i++) m += vox.w[i] * d[i];
+    m /= vox.wsum;
     for (let i = 0; i < d.length; i++) d[i] -= m;
-    return { d, mean: m };
+    const fd = { d, mean: m, vox, ssb: null };
+    if (spin) {
+      let v = 0; for (let i = 0; i < d.length; i++) v += vox.w[i] * offF[i] * offF[i];
+      const beta = Math.sqrt(v / vox.wsum) / SPIN_RATE;   // modulation index
+      fd.ssb = { rate: SPIN_RATE, s1: beta / 2, s2: beta * beta / 8 };
+    }
+    return fd;
+  }
+  const SPIN_RATE = 20;
+
+  // shim settings (relative to the hidden "zero") that minimise the field spread: least squares
+  function bestShims(vox = VOX) {
+    const n = SHIMS.length, W = vox.wsum, w = vox.w;
+    const mean = a => { let m = 0; for (let i = 0; i < vox.n; i++) m += w[i] * a[i]; return m / W; };
+    const cols = SHIMS.map(s => { const b = vox.basis[s], mu = mean(b); return b.map(v => v - mu); });
+    const rmu = mean(vox.resid), r = vox.resid.map(v => v - rmu);
+    const A = [], y = [];
+    for (let p = 0; p < n; p++) {
+      A.push([]); let yy = 0;
+      for (let i = 0; i < vox.n; i++) yy += w[i] * cols[p][i] * r[i];
+      y.push(-yy);
+      for (let q = 0; q < n; q++) { let c = 0; for (let i = 0; i < vox.n; i++) c += w[i] * cols[p][i] * cols[q][i]; A[p].push(c); }
+    }
+    const tr = A.reduce((t, row, p) => t + row[p], 0) / n;
+    for (let p = 0; p < n; p++) A[p][p] += 1e-6 * tr;
+    // Gaussian elimination with partial pivoting
+    for (let c = 0; c < n; c++) {
+      let pv = c; for (let rr = c + 1; rr < n; rr++) if (Math.abs(A[rr][c]) > Math.abs(A[pv][c])) pv = rr;
+      [A[c], A[pv]] = [A[pv], A[c]]; [y[c], y[pv]] = [y[pv], y[c]];
+      for (let rr = c + 1; rr < n; rr++) { const f = A[rr][c] / A[c][c]; for (let k = c; k < n; k++) A[rr][k] -= f * A[c][k]; y[rr] -= f * y[c]; }
+    }
+    const x = new Array(n).fill(0);
+    for (let c = n - 1; c >= 0; c--) { let s = y[c]; for (let k = c + 1; k < n; k++) s -= A[c][k] * x[k]; x[c] = s / A[c][c]; }
+    const out = {}; SHIMS.forEach((s, p) => out[s] = x[p] / HZ_PER_UNIT[s]);
+    return out; // shim-unit offsets from the hidden zero
   }
 
   // relative height (0..1) of the 2H lock resonance
   function lockHeight(fd) {
-    const g = 0.10, g2 = g * g; let H = 0;
-    for (let i = 0; i < VOX.n; i++) { const x = fd.d[i] * LOCK_RATIO; H += VOX.w[i] * g2 / (g2 + x * x); }
-    return H / VOX.wsum;
+    const vox = fd.vox, g = 0.10, g2 = g * g; let H = 0;
+    for (let i = 0; i < vox.n; i++) { const x = fd.d[i] * LOCK_RATIO; H += vox.w[i] * g2 / (g2 + x * x); }
+    return H / vox.wsum;
   }
 
   function histogram(fd) {
+    const vox = fd.vox;
     let mn = Infinity, mx = -Infinity;
     for (const v of fd.d) { if (v < mn) mn = v; if (v > mx) mx = v; }
     const span = Math.max(mx - mn, 0.01);
     const bin = Math.max(0.01, span / 400);
     const nb = Math.ceil(span / bin) + 2;
     const h = new Float64Array(nb);
-    for (let i = 0; i < VOX.n; i++) {
+    for (let i = 0; i < vox.n; i++) {
       const p = (fd.d[i] - mn) / bin, j = Math.floor(p), f = p - j;
-      h[j] += VOX.w[i] * (1 - f); h[j + 1] += VOX.w[i] * f;
+      h[j] += vox.w[i] * (1 - f); h[j + 1] += vox.w[i] * f;
     }
-    for (let j = 0; j < nb; j++) h[j] /= VOX.wsum;
+    for (let j = 0; j < nb; j++) h[j] /= vox.wsum;
     return { f0: mn, bin, h };
   }
 
@@ -383,7 +450,7 @@ const NMR = (() => {
     return { w50: width(0.5), w055: width(0.0055), w011: width(0.0011) };
   }
 
-  // g(t): FID modulation from field inhomogeneity
+  // g(t): FID modulation from field inhomogeneity (and spinning sidebands)
   function inhomFID(fd, N, dt) {
     const hs = histogram(fd);
     const gr = new Float64Array(N), gi = new Float64Array(N);
@@ -394,6 +461,13 @@ const NMR = (() => {
       for (let n = 0; n < N; n++) {
         gr[n] += pr; gi[n] += pi;
         const t = pr * c - pi * s; pi = pr * s + pi * c; pr = t;
+      }
+    }
+    if (fd.ssb) {
+      const { rate, s1, s2 } = fd.ssb;
+      for (let n = 0; n < N; n++) {
+        const t = n * dt, m = 1 - 2 * (s1 + s2) + 2 * s1 * Math.cos(2 * Math.PI * rate * t) + 2 * s2 * Math.cos(4 * Math.PI * rate * t);
+        gr[n] *= m; gi[n] *= m;
       }
     }
     return { gr, gi };
@@ -416,7 +490,7 @@ const NMR = (() => {
       }
       const amp = g.n * g.conc;
       let main = 1; if (g.sat) main -= 0.011; if (g.si) main -= 0.047;
-      const add = (dHz, f) => comps.forEach(cp => L.push({ ppm: g.ppm + (cp.off + dHz) / SF, amp: amp * cp.a * f, lw: g.lw, t1: g.t1, tag: g.id }));
+      const add = (dHz, f) => comps.forEach(cp => L.push({ ppm: g.ppm + (cp.off + dHz) / SF, amp: amp * cp.a * f, lw: g.lw, t1: g.t1, tag: g.id, tc: g.tc || 0 }));
       add(0, main);
       if (g.sat) { add(g.sat / 2, 0.0055); add(-g.sat / 2, 0.0055); }
       if (g.si) { add(3.3, 0.0235); add(-3.3, 0.0235); }
@@ -425,15 +499,15 @@ const NMR = (() => {
   }
 
   // noiseless FIDs grouped by T1 (complex, unit flip, not RG-scaled)
-  // o: {N, swh, o1p, refShift(ppm), fd, lines, presat(bool)}
+  // o: {N, swh, o1p, refShift(ppm), fd, lines, presat: {res, width} | null, dT}
   function synthGroups(o) {
     const N = o.N, dt = 1 / o.swh;
     const { gr, gi } = inhomFID(o.fd, N, dt);
     const groups = new Map();
     for (const ln of o.lines) {
-      const ppmApp = ln.ppm + o.refShift;
+      const ppmApp = ln.ppm + o.refShift + ln.tc * (o.dT || 0);
       let amp = ln.amp;
-      if (o.presat) { const d = (ppmApp - o.o1p) * SF; amp *= 1 - 0.97 * Math.exp(-(d / 18) * (d / 18)); }
+      if (o.presat) { const d = (ppmApp - o.o1p) * SF, w = o.presat.width; amp *= 1 - (1 - o.presat.res) * Math.exp(-(d / w) * (d / w)); }
       if (amp < 1e-9) continue;
       let g = groups.get(ln.t1);
       if (!g) { g = { t1: ln.t1, re: new Float64Array(N), im: new Float64Array(N) }; groups.set(ln.t1, g); }
@@ -491,7 +565,7 @@ const NMR = (() => {
     return { re: R, im: I };
   }
 
-  return { SF, LOCK_RATIO, SHIMS, AXIAL, HZ_PER_UNIT, rng, gauss, fieldDeltas, lockHeight, lineWidths, synthGroups, linesFor, transform, fft, VOX };
+  return { SF, LOCK_RATIO, SHIMS, AXIAL, HZ_PER_UNIT, rng, gauss, makeVox, fieldDeltas, bestShims, lockHeight, lineWidths, synthGroups, linesFor, transform, fft, VOX, SPIN_RATE };
 })();
 if (typeof module !== 'undefined') module.exports = NMR;
 
@@ -501,14 +575,14 @@ if (typeof module !== 'undefined') module.exports = NMR;
 const SAMPLES = (() => {
   // physical solvent data: 2H lock strength, saturation (dB) and residual signals
   const SOLV = {
-    D2O: { name: 'D₂O', lockKey: 'D2O', ppm: 4.79, lockStr: 1.0, ps: -16,
-      extras: [{ id: 'solv', label: 'HOD (residual solvent)', ppm: 4.790, n: 1, conc: 120, lw: 1.1, t1: 8 }] },
-    CDCl3: { name: 'CDCl₃', lockKey: 'CDCl3', ppm: 7.26, lockStr: 0.42, ps: -22,
+    D2O: { name: 'D₂O', lockKey: 'D2O', ppm: 4.79, lockStr: 1.0, ps: -16, lockTc: -0.0114,
+      extras: [{ id: 'solv', label: 'HOD (residual solvent)', ppm: 4.790, n: 1, conc: 120, lw: 1.1, t1: 8, tc: -0.0114 }] },
+    CDCl3: { name: 'CDCl₃', lockKey: 'CDCl3', ppm: 7.26, lockStr: 0.42, ps: -22, lockTc: 0,
       extras: [{ id: 'solv', label: 'CHCl₃ (residual solvent)', ppm: 7.260, n: 1, conc: 25, lw: 0.35, t1: 9, sat: 209 },
-               { id: 'water', label: 'H₂O (dissolved water)', ppm: 1.560, n: 1, conc: 4, lw: 2.5, t1: 1.5 }] },
-    DMSO: { name: 'DMSO-d₆', lockKey: 'DMSO', ppm: 2.50, lockStr: 0.75, ps: -19,
+               { id: 'water', label: 'H₂O (dissolved water)', ppm: 1.560, n: 1, conc: 4, lw: 2.5, t1: 1.5, tc: -0.008 }] },
+    DMSO: { name: 'DMSO-d₆', lockKey: 'DMSO', ppm: 2.50, lockStr: 0.75, ps: -19, lockTc: 0,
       extras: [{ id: 'solv', label: 'DMSO-d₅ (residual solvent)', ppm: 2.500, n: 1, conc: 30, lw: 0.45, t1: 3, split: [[1.9, 2, 1]] },
-               { id: 'water', label: 'H₂O / HOD', ppm: 3.330, n: 1, conc: 35, lw: 4, t1: 1.5 }] }
+               { id: 'water', label: 'H₂O / HOD', ppm: 3.330, n: 1, conc: 35, lw: 4, t1: 1.5, tc: -0.0055 }] }
   };
   const REF = {
     DSS: [{ id: 'ref', label: 'DSS Si(CH₃)₃', ppm: 0, n: 9, conc: 0.5, lw: 0.25, t1: 2.2, sat: 118.6, si: true },
@@ -584,13 +658,13 @@ const SAMPLES = (() => {
       groups: [{ id: 'a', ppm: 7.215, n: 2, split: [[8.1, 1]], lw: 0.4, t1: 3.0 }, { id: 'b', ppm: 7.100, n: 2, split: [[8.1, 1]], lw: 0.4, t1: 3.0 },
         { id: 'c', ppm: 3.700, n: 1, split: [[7.2, 3]], lw: 0.4, t1: 3.0 }, { id: 'd', ppm: 2.447, n: 2, split: [[7.2, 1]], lw: 0.4, t1: 1.5 },
         { id: 'e', ppm: 1.845, n: 1, split: [[6.8, 8]], lw: 0.5, t1: 2.5 }, { id: 'f', ppm: 1.502, n: 3, split: [[7.2, 1]], lw: 0.35, t1: 1.5 },
-        { id: 'g', ppm: 0.899, n: 6, split: [[6.6, 1]], lw: 0.35, t1: 2.0 }, { id: 'h', ppm: 11.20, n: 1, lw: 60, t1: 1.0 }] },
+        { id: 'g', ppm: 0.899, n: 6, split: [[6.6, 1]], lw: 0.35, t1: 2.0 }, { id: 'h', ppm: 11.20, n: 1, lw: 60, t1: 1.0, tc: -0.006 }] },
     { id: 'asp', name: 'Aspirin in DMSO-d₆ (TMS)', short: 'aspirin_DMSO', mol: 'Aspirin', solvent: 'DMSO', ref: 'TMS', conc: 25, sn: 'a', struct: ASPIRIN,
       groups: [{ id: 'a', ppm: 7.920, n: 1, split: [[7.8, 1], [1.7, 1]], lw: 0.45, t1: 3.5 }, { id: 'b', ppm: 7.625, n: 1, split: [[7.8, 2], [1.7, 1]], lw: 0.45, t1: 3.5 },
         { id: 'c', ppm: 7.360, n: 1, split: [[7.6, 2], [1.0, 1]], lw: 0.45, t1: 3.5 }, { id: 'd', ppm: 7.170, n: 1, split: [[8.1, 1], [1.0, 1]], lw: 0.45, t1: 3.5 },
-        { id: 'e', ppm: 2.230, n: 3, lw: 0.3, t1: 2.5, sat: 130 }, { id: 'f', ppm: 13.10, n: 1, lw: 45, t1: 1.0 }] },
+        { id: 'e', ppm: 2.230, n: 3, lw: 0.3, t1: 2.5, sat: 130 }, { id: 'f', ppm: 13.10, n: 1, lw: 45, t1: 1.0, tc: -0.006 }] },
     { id: 'para_dmso', name: 'Paracetamol in DMSO-d₆ (TMS)', short: 'paracetamol_DMSO', mol: 'Paracetamol', solvent: 'DMSO', ref: 'TMS', conc: 25, sn: 'd', struct: PARA,
-      groups: [{ id: 'a', ppm: 9.650, n: 1, lw: 3, t1: 1.2 }, { id: 'b', ppm: 9.140, n: 1, lw: 3, t1: 1.2 },
+      groups: [{ id: 'a', ppm: 9.650, n: 1, lw: 3, t1: 1.2, tc: -0.0050 }, { id: 'b', ppm: 9.140, n: 1, lw: 3, t1: 1.2, tc: -0.0065 },
         { id: 'c', ppm: 7.345, n: 2, split: [[8.9, 1]], lw: 0.45, t1: 2.5 }, { id: 'd', ppm: 6.680, n: 2, split: [[8.9, 1]], lw: 0.45, t1: 2.5 },
         { id: 'e', ppm: 1.980, n: 3, lw: 0.3, t1: 2.0, sat: 129 }] },
     { id: 'para_d2o', name: 'Paracetamol in D₂O (DSS)', short: 'paracetamol_D2O', mol: 'Paracetamol', solvent: 'D2O', ref: 'DSS', conc: 10, sn: 'd', struct: PARA,
@@ -599,18 +673,48 @@ const SAMPLES = (() => {
     { id: 'van', name: 'Vanillin in CDCl₃ (TMS)', short: 'vanillin_CDCl3', mol: 'Vanillin', solvent: 'CDCl3', ref: 'TMS', conc: 25, sn: 'd', struct: VAN,
       groups: [{ id: 'a', ppm: 9.830, n: 1, lw: 0.5, t1: 4.0 }, { id: 'b', ppm: 7.437, n: 1, split: [[8.0, 1], [1.8, 1]], lw: 0.45, t1: 3.2 },
         { id: 'c', ppm: 7.420, n: 1, split: [[1.8, 1]], lw: 0.45, t1: 3.5 }, { id: 'd', ppm: 7.040, n: 1, split: [[8.0, 1]], lw: 0.45, t1: 3.2 },
-        { id: 'e', ppm: 6.200, n: 1, lw: 8, t1: 1.0 }, { id: 'f', ppm: 3.970, n: 3, lw: 0.3, t1: 2.2, sat: 145 }] }
+        { id: 'e', ppm: 6.200, n: 1, lw: 8, t1: 1.0, tc: -0.008 }, { id: 'f', ppm: 3.970, n: 3, lw: 0.3, t1: 2.2, sat: 145 }] }
   ];
 
-  // every signal of a sample (compound + solvent extras + reference)
-  function signals(s) {
-    return [...s.groups.map(g => ({ ...g, conc: s.conc, label: s.struct.keys[g.id] })), ...SOLV[s.solvent].extras, ...REF[s.ref]];
+  // common lab contaminants per solvent (approximate shifts from standard impurity tables)
+  const IMP = {
+    CDCl3: [
+      { name: 'acetone', sig: [{ ppm: 2.170, n: 6, lw: 0.4, t1: 4 }] },
+      { name: 'grease (hydrocarbon)', sig: [{ ppm: 1.255, n: 8, lw: 4, t1: 1 }, { ppm: 0.865, n: 3, lw: 4, t1: 1 }] },
+      { name: 'silicone grease', sig: [{ ppm: 0.070, n: 6, lw: 0.6, t1: 2 }] },
+      { name: 'dichloromethane', sig: [{ ppm: 5.300, n: 2, lw: 0.4, t1: 6 }] },
+      { name: 'ethyl acetate', not: 'etoac', sig: [{ ppm: 2.050, n: 3, lw: 0.3, t1: 4.5 }, { ppm: 4.120, n: 2, split: [[7.1, 3]], lw: 0.3, t1: 5 }, { ppm: 1.260, n: 3, split: [[7.1, 2]], lw: 0.3, t1: 4 }] }],
+    DMSO: [
+      { name: 'acetone', sig: [{ ppm: 2.090, n: 6, lw: 0.4, t1: 4 }] },
+      { name: 'silicone grease', sig: [{ ppm: -0.060, n: 6, lw: 0.6, t1: 2 }] },
+      { name: 'dichloromethane', sig: [{ ppm: 5.760, n: 2, lw: 0.4, t1: 6 }] },
+      { name: 'ethyl acetate', sig: [{ ppm: 1.990, n: 3, lw: 0.3, t1: 4.5 }, { ppm: 4.030, n: 2, split: [[7.1, 3]], lw: 0.3, t1: 5 }, { ppm: 1.170, n: 3, split: [[7.1, 2]], lw: 0.3, t1: 4 }] }],
+    D2O: [
+      { name: 'acetone', sig: [{ ppm: 2.220, n: 6, lw: 0.4, t1: 4 }] },
+      { name: 'ethanol', sig: [{ ppm: 3.650, n: 2, split: [[7.1, 3]], lw: 0.35, t1: 3 }, { ppm: 1.170, n: 3, split: [[7.1, 2]], lw: 0.35, t1: 3 }] },
+      { name: 'methanol', sig: [{ ppm: 3.340, n: 3, lw: 0.4, t1: 4 }] },
+      { name: 'DMSO', sig: [{ ppm: 2.710, n: 6, lw: 0.4, t1: 3 }] }]
+  };
+  // pick 0-2 contaminants for a sample (rand = 0..1 generator)
+  function pickImpurities(s, rand) {
+    const pool = IMP[s.solvent].filter(x => x.not !== s.id), out = [];
+    const nImp = rand() < 0.25 ? 0 : rand() < 0.75 ? 1 : 2;
+    for (let k = 0; k < nImp && pool.length; k++) {
+      const x = pool.splice(Math.floor(rand() * pool.length), 1)[0];
+      const conc = 0.15 + rand() * 0.6;
+      x.sig.forEach(g => out.push({ ...g, id: 'imp', conc, label: x.name }));
+    }
+    return out;
+  }
+  // every signal of a sample (compound + solvent extras + reference + contaminants)
+  function signals(s, imps = []) {
+    return [...s.groups.map(g => ({ ...g, conc: s.conc, label: s.struct.keys[g.id] })), ...SOLV[s.solvent].extras, ...REF[s.ref], ...imps];
   }
   // half-width (Hz) of a multiplet
   const halfHz = g => (g.split || []).reduce((a, [J, n, sp]) => a + J * n * (sp ? 1 : 0.5), 0) + 3 * g.lw + 2.5;
   // assignment rows (true ppm), overlapping multiplets merged
-  function rows(s, SF) {
-    const r = signals(s).map(g => ({ lo: g.ppm - halfHz(g) / SF - 0.006, hi: g.ppm + halfHz(g) / SF + 0.006, ans: new Set([g.id]), n: g.n }))
+  function rows(s, SF, imps = [], dT = 0) {
+    const r = signals(s, imps).map(g => { const c = g.ppm + (g.tc || 0) * dT; return { lo: c - halfHz(g) / SF - 0.006, hi: c + halfHz(g) / SF + 0.006, ans: new Set([g.id]), n: g.n }; })
       .sort((a, b) => b.hi - a.hi);
     const out = [];
     for (const x of r) {
@@ -620,7 +724,7 @@ const SAMPLES = (() => {
     }
     return out;
   }
-  return { SOLV, REF, list, byId: Object.fromEntries(list.map(s => [s.id, s])), signals, rows };
+  return { SOLV, REF, IMP, list, byId: Object.fromEntries(list.map(s => [s.id, s])), signals, rows, pickImpurities };
 })();
 
 // ===================== synthesized lab sounds (Web Audio) =====================
@@ -767,8 +871,18 @@ const SFX = (() => {
     const sampleOff = {};
     const offE = { Z1: 22, Z2: 16, Z3: 5, Z4: 4, Z5: 2, X: 7, Y: 7, XZ: 5, YZ: 5, XY: 3, X2Y2: 3 };
     SAMPLES.list.forEach(sm => { sampleOff[sm.id] = {}; NMR.SHIMS.forEach(s => sampleOff[sm.id][s] = Math.round(gn() * offE[s])); });
+    // per-sample geometry (fill height / depth-gauge error), its voxel model, LS-optimal shims and contaminants
+    const vox = {}, best = {}, imps = {}, p90 = {};
+    const P90F = { D2O: 1.07, CDCl3: 1.0, DMSO: 1.04 };   // polar / lossy samples need longer pulses
+    SAMPLES.list.forEach(sm => {
+      const dd = clamp(gn() * 0.07, -0.18, 0.18), fill = rr(-0.05, 0.08);
+      vox[sm.id] = NMR.makeVox({ top: 1.4 + dd + fill, bot: -1.45 + dd, dz0: 0.12, sus: 4.0 });
+      best[sm.id] = NMR.bestShims(vox[sm.id]);
+      imps[sm.id] = SAMPLES.pickImpurities(sm, R);
+      p90[sm.id] = 9.55 * P90F[sm.solvent] * (1 + gn() * 0.03);   // at the coil centre, probe tuned
+    });
     return {
-      sampleId: 'caf_d2o', sampleOff, tunedSolv: null, assign: {},
+      sampleId: 'caf_d2o', sampleOff, tunedSolv: null, assign: {}, vox, best, imps, p90, insertT: 0, T0: 295.5, popt: null,
       opt, shims, rshFile, fieldOpt,
       fieldTable: fieldOpt + Math.round(gn() * 40),
       field: fieldOpt + Math.round(gn() * 60), fieldDrift: 0,
@@ -776,9 +890,9 @@ const SFX = (() => {
       lockPhaseOpt: rr(20, 340), locked: false, sweep: true,
       refErr: rr(-0.035, 0.035),
       sample: 'rack', lift: false, spin: false, moving: false,
-      acqu: { PULPROG: 'zg30', NS: 16, DS: 2, TD: 32768, SW: 20.0, O1P: 4.70, D1: 1.0, RG: 2050, SOLVENT: 'CDCl3', P1: 9.8 },
+      acqu: { PULPROG: 'zg30', NS: 16, DS: 2, TD: 32768, SW: 20.0, O1P: 4.70, D1: 1.0, RG: 2050, SOLVENT: 'CDCl3', P1: Math.round(rr(7.5, 13) * 10) / 10 },
       proc: { SI: 32768, LB: 0.3, PHC0: Math.round(rr(-180, 180) * 10) / 10, PHC1: Math.round(rr(-30, 30) * 10) / 10, SR: 0 },
-      inst: { th0: rr(-180, 180), th1: rr(-35, 35) },
+      inst: { th0: rr(-180, 180), th1: rr(-35, 35), dc: [rr(0.0008, 0.0016) * (R() < .5 ? -1 : 1), rr(0.0005, 0.0012) * (R() < .5 ? -1 : 1)] },
       busy: null, haltReq: false,
       acc: null, data: null, spec: null, emDone: false,
       view: { mode: 'spec', hi: null, lo: null, y: 1 }, peaks: null, calMode: false,
@@ -792,10 +906,29 @@ const SFX = (() => {
 
   // ------------------------------------------------------------------ physics helpers
   const optOf = s => S.opt[s] + (S.sampleOff[S.sampleId] || {})[s];
-  function shimErr() { const e = {}; NMR.SHIMS.forEach(s => e[s] = S.shims[s] - optOf(s)); return e; }
+  const bestOf = s => optOf(s) + S.best[S.sampleId][s];          // shim value that minimises the field spread
+  // sample temperature: relaxes from room temperature towards the 298 K probe after insertion
+  const TAU_T = 20;
+  function sampleTemp() {
+    if (S.sample !== 'probe' || S.moving) return S.T0;
+    return 298 + (S.T0 - 298) * Math.exp(-(performance.now() / 1000 - S.insertT) / TAU_T);
+  }
+  const dTemp = () => sampleTemp() - 298;
+  // convection / thermal gradients while the sample equilibrates act like drifting shim errors
+  function tempErr() {
+    const dT = dTemp(), t = performance.now() / 1000, e = {};
+    if (Math.abs(dT) < 0.02 || S.sample !== 'probe') return e;
+    const q = v => Math.round(v * 2) / 2;
+    e.Z1 = q(22 * dT * (1 + 0.25 * Math.sin(t / 2.3)));
+    e.Z2 = q(-17 * dT * (1 + 0.2 * Math.sin(t / 3.1)));
+    e.X = q(5 * dT * Math.sin(t / 1.7)); e.Y = q(5 * dT * Math.cos(t / 2.1));
+    return e;
+  }
+  function shimErr() { const e = {}, te = tempErr(); NMR.SHIMS.forEach(s => e[s] = S.shims[s] - optOf(s) + (te[s] || 0)); return e; }
   function curFD() {
-    const key = NMR.SHIMS.map(s => S.shims[s]).join(',') + (S.spin ? 's' : '') + S.sampleId;
-    if (key !== S.fdKey) { S.fd = NMR.fieldDeltas(shimErr(), S.spin); S.H = NMR.lockHeight(S.fd); S.fdKey = key; }
+    const te = tempErr();
+    const key = NMR.SHIMS.map(s => S.shims[s] + (te[s] || 0)).join(',') + (S.spin ? 's' : '') + S.sampleId;
+    if (key !== S.fdKey) { S.fd = NMR.fieldDeltas(shimErr(), S.spin, S.vox[S.sampleId]); S.H = NMR.lockHeight(S.fd); S.fdKey = key; }
     return S.fd;
   }
   function curLW() { curFD(); if (S.lwKey !== S.fdKey) { S.lwCache = NMR.lineWidths(S.fd); S.lwKey = S.fdKey; } return S.lwCache; }
@@ -816,7 +949,9 @@ const SFX = (() => {
   }
   function refShift() {
     const F = S.locked ? fRes() : S.field + S.fieldDrift;
-    return (F - S.fieldOpt) / FIELD_PER_PPM + S.refErr;
+    // the lock holds the solvent 2H line fixed, so its temperature shift moves everything else
+    const tl = S.locked && S.sample === 'probe' ? -solvPhys().lockTc * dTemp() : 0;
+    return (F - S.fieldOpt) / FIELD_PER_PPM + S.refErr + tl;
   }
 
   // ------------------------------------------------------------------ log & status
@@ -835,6 +970,7 @@ const SFX = (() => {
       `<span>Sample: <b>${smp}</b></span><span>Spin: <b>${S.spin ? '20 Hz' : 'off'}</b></span>` +
       `<span>PULPROG <b>${S.acqu.PULPROG}</b> NS <b>${S.acqu.NS}</b> RG <b>${S.acqu.RG}</b></span><span>${S.busy ? '<b style="color:#ffd36b">' + S.busy + '</b>' : 'idle'}</span>`;
     $('airTxt').textContent = S.lift ? 'ON' : 'OFF';
+    const Ts = sampleTemp(); $('tempTxt').textContent = Ts.toFixed(1) + ' K'; $('tempTxt').style.color = Math.abs(Ts - 298) > 0.3 ? '#ffb02e' : '';
     $('sampleSel').disabled = S.sample !== 'rack';
     $('smpTxt').textContent = smp;
   }
@@ -847,7 +983,7 @@ const SFX = (() => {
       const mf = bg.querySelector('.mf');
       buttons.forEach((b, i) => {
         const btn = document.createElement('button'); btn.textContent = b;
-        btn.onclick = () => { const inp = bg.querySelector('input,select'); document.body.removeChild(bg); res({ button: b, index: i, value: inp ? inp.value : null }); $('cmd').focus(); };
+        btn.onclick = () => { const all = [...bg.querySelectorAll('input,select')]; document.body.removeChild(bg); res({ button: b, index: i, value: all[0] ? all[0].value : null, values: all.map(e => e.value) }); $('cmd').focus(); };
         mf.appendChild(btn);
       });
       document.body.appendChild(bg);
@@ -964,7 +1100,8 @@ const SFX = (() => {
       log('Lift air OFF.');
       if (S.sample === 'air') {
         S.moving = true; animateSample('probe', 2600); await sleep(2600); S.moving = false; S.sample = 'probe'; SFX.thunk();
-        log(`Sample inserted into the probe: ${samp().name}.`, 'ok'); S.flags.inserted = true;
+        log(`Sample inserted into the probe: ${samp().name}. Sample temperature ${S.T0.toFixed(1)} K → 298 K (allow it to equilibrate).`, 'ok'); S.flags.inserted = true;
+        S.insertT = performance.now() / 1000;
         if (S.lastInserted !== S.sampleId) { S.lastInserted = S.sampleId; S.flags.lopt = false; S.flags.shim = false; S.rgaDone = false; }
       }
     }
@@ -1101,10 +1238,11 @@ const SFX = (() => {
     ['rsh', 'Load a standard shim set', 'Type rsh — the previous user left the shims a mess.'],
     ['lock', 'Lock on the sample solvent', 'Type lock and choose the solvent of your sample (or lock -noauto + FIELD + LOCK ON).'],
     ['lopt', 'Optimise the lock', 'Adjust LOCK PHASE for max level; keep level 40–90 % with LOCK GAIN; avoid saturation.'],
-    ['shim', 'Shim (reference line < 0.8 Hz)', 'Run topshim (Z shims), then tweak X, Y, XZ, YZ on the knob for max lock level.'],
+    ['shim', 'Shim (reference line < 0.8 Hz)', 'Let the sample temperature settle (console), run topshim, then tweak X, Y, XZ, YZ for max lock level. Touching Z² moves the best Z — iterate.'],
     ['tune', 'Tune & match the probe', 'Type atma (needed again after changing solvent).'],
+    ['p1', 'Calibrate the 90° pulse (P1)', 'pulprog zg, ns 1, ds 0, d1 10; zg + efp + apk; zoom on a strong singlet; paropt P1 2 2 24; click the 360° null. (Quick way: pulsecal.)'],
     ['rga', 'Set the receiver gain', 'Type rga (the old RG of 2050 will overflow the ADC).'],
-    ['acq', 'Acquire the spectrum', 'Check eda (NS, D1, PULPROG), then zg. Short D1 with zg (90°) saturates slow-relaxing protons.'],
+    ['acq', 'Acquire the spectrum', 'Check eda (NS, D1, PULPROG), then zg. Use NS = multiple of 4 (phase cycle); short D1 with zg (90°) saturates slow-relaxing protons; avoid spinning (sidebands).'],
     ['proc', 'Process: FT, phase, baseline', 'efp, then apk (or .ph), then abs.'],
     ['ref', 'Reference DSS / TMS to 0.000 ppm', 'Type .cal, click the reference singlet near 0 ppm, enter 0.'],
     ['asg', 'Assign the spectrum', 'Open the Assign tab, label every signal, press Check.']
@@ -1120,6 +1258,7 @@ const SFX = (() => {
     if (o.lopt) S.flags.lopt = true; o.lopt = o.lopt || !!S.flags.lopt;
     o.shim = S.sample === 'probe' && curLW().w50 < 0.8; if (o.shim) S.flags.shim = true; o.shim = o.shim || (!!S.flags.shim && !!S.data);
     o.tune = S.sample === 'probe' && tuneFactor() === 1;
+    o.p1 = S.sample === 'probe' && Math.abs(S.acqu.P1 / p90Cal() - 1) < 0.03;
     o.rga = S.rgaDone;
     o.acq = !!S.data && S.data.complete;
     o.proc = !!S.spec && S.spec.pk && S.spec.abs && phaseErr() < 6;
@@ -1131,18 +1270,32 @@ const SFX = (() => {
 
   // ------------------------------------------------------------------ acquisition
   function acqGeom() { const N = S.acqu.TD / 2, swh = S.acqu.SW * SF; return { N, swh, aq: N / swh }; }
-  const flipRad = () => (S.acqu.PULPROG === 'zg30' ? 30 : 90) * Math.PI / 180;
+  // B1 is weaker towards the coil ends: fraction of sample seeing a given relative B1
+  const B1W = [[1.0, 0.6], [0.97, 0.25], [0.92, 0.12], [0.80, 0.03]];
+  const sinEff = th => B1W.reduce((a, [b, w]) => a + w * Math.sin(th * b), 0);
+  const cosEff = th => B1W.reduce((a, [b, w]) => a + w * Math.cos(th * b), 0);
+  // the 360° null of the averaged signal sits a little beyond 4 × P90(centre)
+  const NULLX = (() => { let lo = 0.98, hi = 1.12; for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; sinEff(2 * Math.PI * m) < 0 ? lo = m : hi = m; } return (lo + hi) / 2; })();
+  const p90Centre = () => S.p90[S.sampleId] * (tuneFactor() === 1 ? 1 : 1.10);   // detuned probe: weaker B1
+  const p90Cal = () => p90Centre() * NULLX;                                         // what a 360°-null calibration finds
+  const flipRad = (p1 = S.acqu.P1) => (S.acqu.PULPROG === 'zg30' ? 30 : 90) * (p1 / p90Cal()) * Math.PI / 180;
   const tuneFactor = () => (S.sample === 'probe' && S.tunedSolv === samp().solvent) ? 1 : 0.55;
   const lineCache = {};
   function signalGroups(N, swh, driftHz = 0) {
     if (S.sample !== 'probe') return [];
-    const lines = lineCache[S.sampleId] || (lineCache[S.sampleId] = NMR.linesFor(SAMPLES.signals(samp())));
-    return NMR.synthGroups({ N, swh, o1p: S.acqu.O1P, refShift: refShift() + driftHz / SF, fd: curFD(), lines, presat: S.acqu.PULPROG === 'zgpr' });
+    const lines = lineCache[S.sampleId] || (lineCache[S.sampleId] = NMR.linesFor(SAMPLES.signals(samp(), S.imps[S.sampleId])));
+    return NMR.synthGroups({ N, swh, o1p: S.acqu.O1P, refShift: refShift() + driftHz / SF, fd: curFD(), lines, presat: presatParams(), dT: dTemp() });
+  }
+  // presaturation runs during D1: longer D1 -> deeper and slightly wider water suppression
+  function presatParams() {
+    if (S.acqu.PULPROG !== 'zgpr') return null;
+    const d1 = S.acqu.D1;
+    return { res: 0.02 + 0.98 * Math.exp(-d1 / 0.4), width: 15 + 4 * Math.min(d1, 5) };
   }
   // one scan's FID: each T1 group weighted by its current longitudinal magnetisation
   function combine(groups, mz, N) {
     const re = new Float64Array(N), im = new Float64Array(N);
-    const k0 = S.acqu.RG * SCALE * tuneFactor() * Math.sin(flipRad());
+    const k0 = S.acqu.RG * SCALE * tuneFactor() * sinEff(flipRad());
     for (const g of groups) {
       const k = k0 * (mz ? mz.get(g.t1) : 1);
       for (let i = 0; i < N; i++) { re[i] += k * g.re[i]; im[i] += k * g.im[i]; }
@@ -1203,15 +1356,17 @@ const SFX = (() => {
     if (arg && /3d/i.test(arg)) { log('topshim: this probe has a z-gradient only — 3D shimming is not available.', 'err'); return; }
     if (!S.locked) { log('topshim: lock is off — lock first.', 'err'); SFX.beep(); return; }
     if (S.spin) log('topshim: sample is spinning — shimming non-spinning is recommended. Continuing.', 'warn');
+    if (Math.abs(dTemp()) > 0.3) log(`topshim: warning — sample temperature ${sampleTemp().toFixed(1)} K has not equilibrated; the result will drift.`, 'warn');
     setBusy('topshim', 0.02);
     log('TopShim: 1D gradient shimming on 2H (' + S.lockSolv + '), shims Z1–Z5 ...');
     const Z = ['Z1', 'Z2', 'Z3', 'Z4', 'Z5'];
-    const stdAx = () => { const e = {}; Z.forEach(s => e[s] = S.shims[s] - optOf(s)); const fd = NMR.fieldDeltas(e, false); let v = 0; for (let i = 0; i < fd.d.length; i++) v += NMR.VOX.w[i] * fd.d[i] * fd.d[i]; return Math.sqrt(v / NMR.VOX.wsum); };
+    const stdAx = () => { const fd = curFD(), vx = fd.vox; let v = 0; for (let i = 0; i < fd.d.length; i++) v += vx.w[i] * fd.d[i] * fd.d[i]; return Math.sqrt(v / vx.wsum); };
     log(`TopShim: initial B0 standard deviation = ${stdAx().toFixed(2)} Hz`);
     for (let it = 1; it <= 5; it++) {
       for (let k = 0; k < 6; k++) { SFX.relay(); await sleep(260); setBusy('topshim', (it - 1) / 5 + k / 30); if (S.sample !== 'probe') break; }
       if (S.sample !== 'probe' || !S.locked) { setBusy(null); log('TopShim: aborted (lock/sample lost).', 'err'); return; }
-      Z.forEach(s => { const e = S.shims[s] - optOf(s); S.shims[s] = Math.round(optOf(s) + e * (it < 5 ? 0.3 : 0) + gn() * (it < 5 ? 2 : 1.2)); });
+      const te = tempErr();   // TopShim maps the field as it is *now* (including any thermal gradients)
+      Z.forEach(s => { const tgt = bestOf(s) - (te[s] || 0), e = S.shims[s] - tgt; S.shims[s] = Math.round(tgt + e * (it < 5 ? 0.3 : 0) + gn() * (it < 5 ? 2 : 1.2)); });
       log(`TopShim: iteration ${it}: B0 std dev = ${stdAx().toFixed(2)} Hz`);
     }
     setBusy(null);
@@ -1243,6 +1398,113 @@ const SFX = (() => {
     log(`rga: RG = ${rg}`, 'ok'); SFX.beep();
   }
 
+
+  // ------------------------------------------------------------------ pulse calibration
+  async function cmdPulsecal() {
+    if (!notBusy('pulsecal') || !needSample('pulsecal')) return;
+    setBusy('pulsecal', 0.02); log('pulsecal: automatic 90° pulse determination (nutation, 360° null) ...');
+    for (let k = 0; k < 14; k++) { SFX.relay(); await sleep(380); setBusy('pulsecal', k / 14); }
+    const v = p90Cal() * (1 + gn() * 0.008);
+    setBusy(null);
+    log(`pulsecal: 90° pulse = ${v.toFixed(2)} µs. (P1 not changed — type p1 ${v.toFixed(2)} to use it.)`, 'ok'); SFX.beep();
+  }
+  // Fourier-transform one FID with the current processing and return the phased real part in [lo, hi] ppm
+  function regionSpectrum(acc, lo, hi, swh) {
+    const SI = S.proc.SI, sp = NMR.transform(acc.re, acc.im, SI, S.proc.LB, swh), d2r = Math.PI / 180;
+    const ppmK = k => S.acqu.O1P + (k - SI / 2) * swh / SI / SF - S.proc.SR;
+    const kOfP = p => (p + S.proc.SR - S.acqu.O1P) * SF * SI / swh + SI / 2;
+    const ka = Math.max(0, Math.floor(kOfP(lo))), kb = Math.min(SI - 1, Math.ceil(kOfP(hi)));
+    const out = [];
+    for (let k = kb; k >= ka; k--) {   // high ppm first (left to right)
+      const ph = (-(S.inst.th0 + S.inst.th1 * k / SI) + S.proc.PHC0 + S.proc.PHC1 * k / SI) * d2r;
+      out.push(sp.re[k] * Math.cos(ph) - sp.im[k] * Math.sin(ph));
+    }
+    return out;
+  }
+  async function cmdParopt(arg) {
+    if (!notBusy('paropt') || !needSample('paropt')) return;
+    if (!S.spec || !S.spec.pk || (S.data && S.data.sampleId !== S.sampleId)) {
+      log('paropt: first acquire and phase a reference spectrum of this sample (zg, efp, apk), then zoom on a strong singlet.', 'err'); return;
+    }
+    let [par, st, inc, n] = (arg || '').split(/\s+/).filter(Boolean);
+    if (!par) {
+      const r = await modal('paropt — parameter optimisation', `Parameter to vary: <b>P1</b><br><br>
+        Initial value (µs): <input value="2" style="width:70px"><br>Increment (µs): <input value="2" style="width:70px"><br>Number of experiments: <input value="24" style="width:70px"><br><br>
+        <span style="font-size:11px;color:#555">One experiment per P1 value, each with the current NS, DS and D1. The region shown is the current spectrum view.</span>`, ['Cancel', 'Start']);
+      if (r.button !== 'Start') return;
+      par = 'P1'; [st, inc, n] = r.values;
+    }
+    if (String(par).toUpperCase() !== 'P1') { log('paropt: only P1 can be optimised in this simulator.', 'err'); return; }
+    st = +st; inc = +inc; n = Math.round(+n);
+    if (!(st > 0 && inc > 0 && n >= 2 && n <= 40)) { log('paropt: give initial value > 0, increment > 0 and 2–40 experiments, e.g. paropt P1 2 2 24', 'err'); return; }
+    let hi = S.view.hi, lo = S.view.lo;
+    if (hi - lo > 1.5) {
+      let bk = 0, bv = 0; for (let k = 0; k < S.spec.SI; k++) { const v = Math.hypot(S.spec.re[k], S.spec.im[k]); if (v > bv) { bv = v; bk = k; } }
+      const c = ppmOf(bk); hi = c + 0.05; lo = c - 0.05;
+      log(`paropt: no zoomed region — using the tallest peak, ${hi.toFixed(2)}–${lo.toFixed(2)} ppm. Zoom first to choose your own.`, 'warn');
+    }
+    if (S.acqu.PULPROG !== 'zg') log(`paropt: PULPROG is ${S.acqu.PULPROG}${S.acqu.PULPROG === 'zg30' ? ' (pulse = P1/3, so the nulls move to 3× longer P1)' : ''} — zg is normal for calibration.`, 'warn');
+    const { N, swh, aq } = acqGeom(), ns = S.acqu.NS, ds = S.acqu.DS, TR = aq + S.acqu.D1;
+    if (ns * n > 64) log(`paropt: ${n} experiments × NS ${ns} will take a while — NS 1 is usual.`, 'warn');
+    const oldP1 = S.acqu.P1, mz = new Map();
+    S.popt = { lo, hi, items: [], sel: null, n, st, inc };
+    $('poptWin').style.display = ''; drawPopt();
+    setBusy('paropt', 0); S.haltReq = false;
+    log(`paropt: P1 = ${st} … ${(st + inc * (n - 1)).toFixed(2)} µs, ${n} experiments, NS ${ns}, D1 ${S.acqu.D1} s`);
+    for (let e = 0; e < n && !S.haltReq; e++) {
+      const p1 = +(st + inc * e).toFixed(3); S.acqu.P1 = p1;
+      const acc = { re: new Float64Array(N), im: new Float64Array(N) };
+      const groups = signalGroups(N, swh);
+      groups.forEach(g => { if (!mz.has(g.t1)) mz.set(g.t1, 1); });
+      const a = flipRad(), sgm = Math.sqrt(Math.pow(S.acqu.RG * N_THERMAL, 2) + N_ADC * N_ADC);
+      for (let sc = -ds; sc < ns; sc++) {
+        const sig = combine(groups, mz, N);
+        for (const [t1, m] of mz) mz.set(t1, 1 - (1 - m * cosEff(a)) * Math.exp(-TR / t1));
+        SFX.relay(); await sleep(TR * 1000 * TIME_SCALE * 0.35);
+        if (sc < 0) continue;
+        for (let i = 0; i < N; i++) { acc.re[i] += clamp(sig.re[i] + gn() * sgm, -1, 1); acc.im[i] += clamp(sig.im[i] + gn() * sgm, -1, 1); }
+      }
+      S.popt.items.push({ p1, y: regionSpectrum(acc, lo, hi, swh) });
+      setBusy(`paropt: experiment ${e + 1}/${n} (P1 ${p1} µs)`, (e + 1) / n); drawPopt();
+    }
+    S.acqu.P1 = oldP1; setBusy(null); renderPars();
+    $('poptFoot').innerHTML = 'Click an experiment to select it (the 360° null is where the signal passes from negative back to positive).';
+    log('paropt: finished. Click the experiment at the 360° null (signal passes from − to +), then use "P1 = value/4".', 'ok'); SFX.chime();
+  }
+  const pc = $('poptCanvas'), px = pc.getContext('2d');
+  function drawPopt() {
+    const W = pc.width, H = pc.height, P = S.popt; px.fillStyle = '#fff'; px.fillRect(0, 0, W, H);
+    if (!P) return;
+    const n = P.n, pw = W / n, mid = H * 0.5, base = H - 26;
+    let mx = 1e-12; P.items.forEach(it => it.y.forEach(v => mx = Math.max(mx, Math.abs(v))));
+    for (let e = 0; e < n; e++) {
+      const x0 = e * pw;
+      if (P.sel === e) { px.fillStyle = '#ffe9a8'; px.fillRect(x0, 0, pw, H); }
+      px.strokeStyle = '#e3e8ee'; px.beginPath(); px.moveTo(x0 + pw, 0); px.lineTo(x0 + pw, H); px.stroke();
+      px.strokeStyle = '#c9d2dc'; px.beginPath(); px.moveTo(x0 + 2, mid); px.lineTo(x0 + pw - 2, mid); px.stroke();
+      const it = P.items[e];
+      if (it) {
+        px.strokeStyle = '#1846b0'; px.lineWidth = 1.2; px.beginPath();
+        it.y.forEach((v, i) => { const x = x0 + 3 + (pw - 6) * i / Math.max(1, it.y.length - 1), y = mid - v / mx * (mid - 14); i ? px.lineTo(x, y) : px.moveTo(x, y); });
+        px.stroke(); px.lineWidth = 1;
+      }
+      px.fillStyle = '#333'; px.font = '10px Consolas,monospace'; px.textAlign = 'center';
+      px.fillText((P.st + P.inc * e).toFixed(P.inc < 1 ? 1 : 0), x0 + pw / 2, base + 16);
+    }
+    px.textAlign = 'left'; px.fillStyle = '#666'; px.fillText(`P1 [µs]   region ${P.hi.toFixed(2)}–${P.lo.toFixed(2)} ppm`, 6, 12);
+  }
+  pc.addEventListener('click', e => {
+    const P = S.popt; if (!P) return;
+    const r = pc.getBoundingClientRect(), i = Math.floor((e.clientX - r.left) / r.width * P.n);
+    if (i < 0 || i >= P.n) return;
+    P.sel = i; const v = +(P.st + P.inc * i).toFixed(3); drawPopt();
+    $('poptFoot').innerHTML = `Selected P1 = <b>${v} µs</b>. Use it as:
+      <button data-pv="${(v / 4).toFixed(2)}">360° null → P1 = ${(v / 4).toFixed(2)}</button>
+      <button data-pv="${(v / 2).toFixed(2)}">180° null → P1 = ${(v / 2).toFixed(2)}</button>
+      <button data-pv="${v.toFixed(2)}">90° maximum → P1 = ${v.toFixed(2)}</button>`;
+    $('poptFoot').querySelectorAll('[data-pv]').forEach(b => b.onclick = () => { SFX.click(); setParam('P1', b.dataset.pv); });
+  });
+
   async function cmdZg() {
     if (!notBusy('zg')) return;
     if (S.data) {
@@ -1256,7 +1518,7 @@ const SFX = (() => {
     const acc = { re: new Float64Array(N), im: new Float64Array(N) };
     S.acc = acc; S.spec = null; S.peaks = null; S.emDone = false;
     S.data = { complete: false, scans: 0, overflow: false, lockedAll: S.locked, rg: S.acqu.RG, tuned: tuneFactor() === 1, ns, lw: null, pulprog: S.acqu.PULPROG,
-      sampleId: S.sample === 'probe' ? S.sampleId : null, d1: S.acqu.D1 };
+      sampleId: S.sample === 'probe' ? S.sampleId : null, d1: S.acqu.D1, p1: S.acqu.P1, p1rel: S.sample === 'probe' ? S.acqu.P1 / p90Cal() : 1 };
     setBusy('zg', 0); S.haltReq = false; S.view.mode = 'fid'; switchTab('vSpec');
     log(`zg: started. PULPROG ${S.acqu.PULPROG}, NS ${ns}, DS ${ds}, AQ ${aq.toFixed(2)} s, D1 ${S.acqu.D1} s, RG ${S.acqu.RG}`);
     let sigKey = '', groups = [], drift = 0;
@@ -1266,19 +1528,23 @@ const SFX = (() => {
       if (S.haltReq) break;
       if (!S.locked) { drift += gn() * 0.35 + 0.05; S.data.lockedAll = false; }
       curFD();
-      const key = S.fdKey + '|' + S.locked + '|' + S.sample + '|' + S.lockSolv + (S.locked ? '' : '|' + drift.toFixed(2) + S.fieldDrift.toFixed(1));
+      const key = S.fdKey + '|' + S.locked + '|' + S.sample + '|' + S.lockSolv + '|' + dTemp().toFixed(2) + (S.locked ? '' : '|' + drift.toFixed(2) + S.fieldDrift.toFixed(1));
       if (key !== sigKey) { groups = signalGroups(N, swh, S.locked ? 0 : drift); sigKey = key; }
       groups.forEach(g => { if (!mz.has(g.t1)) mz.set(g.t1, 1); });
       const sig = combine(groups, mz, N);
       // relaxation until the next pulse: Mz -> Mz cos(a), then recovers with T1 over TR
-      for (const [t1, m] of mz) mz.set(t1, 1 - (1 - m * Math.cos(a)) * Math.exp(-TR / t1));
+      for (const [t1, m] of mz) mz.set(t1, 1 - (1 - m * cosEff(a)) * Math.exp(-TR / t1));
       SFX.relay();
       await sleep(scanMs);
       const sgm = Math.sqrt(Math.pow(S.acqu.RG * N_THERMAL, 2) + N_ADC * N_ADC);
       if (sc >= 0) {
         let over = false;
+        // receiver imperfections, cancelled only by a complete CYCLOPS cycle:
+        // quadrature image (rotates as e^{2iφ}: cancels in pairs) and DC offset (rotates as e^{-iφ}: cancels in 4)
+        const j = sc % 4, pImg = [1, -1, 1, -1][j], qd = [[1, 0], [0, -1], [-1, 0], [0, 1]][j];
+        const eps = 0.008, dcR = S.inst.dc[0] * qd[0] - S.inst.dc[1] * qd[1], dcI = S.inst.dc[0] * qd[1] + S.inst.dc[1] * qd[0];
         for (let i = 0; i < N; i++) {
-          let a = sig.re[i] + gn() * sgm, b = sig.im[i] + gn() * sgm;
+          let a = sig.re[i] * (1 + eps * pImg) + dcR + gn() * sgm, b = sig.im[i] * (1 - eps * pImg) + dcI + gn() * sgm;
           if (a > 1) { a = 1; over = true; } else if (a < -1) { a = -1; over = true; }
           if (b > 1) { b = 1; over = true; } else if (b < -1) { b = -1; over = true; }
           acc.re[i] += a; acc.im[i] += b;
@@ -1289,7 +1555,7 @@ const SFX = (() => {
       setBusy(sc < 0 ? `zg: dummy scan ${sc + ds + 1}/${ds}` : `zg: scan ${sc + 1}/${ns}`, (sc + ds + 1) / (ns + ds));
       S.needDraw = true;
     }
-    S.data.complete = S.data.scans === ns; S.data.ref = refShift();
+    S.data.complete = S.data.scans === ns; S.data.ref = refShift(); S.data.dT = dTemp();
     S.data.lw = S.sample === 'probe' ? NMR.lineWidths(curFD()) : null;
     if (!S.data.lockedAll && S.data.lw) { const extra = 0.4 * Math.sqrt(Math.max(1, S.data.scans)); S.data.lw = { w50: S.data.lw.w50 + extra, w055: S.data.lw.w055 + extra * 4, w011: S.data.lw.w011 + extra * 6 }; }
     setBusy(null);
@@ -1484,7 +1750,7 @@ const SFX = (() => {
     ['NS', 'number of scans', { min: 1, max: 1024, int: 1 }], ['DS', 'dummy scans', { min: 0, max: 16, int: 1 }],
     ['TD', 'time-domain size', { sel: [16384, 32768, 65536] }], ['SW', 'spectral width [ppm]', { min: 8, max: 40 }],
     ['O1P', 'transmitter offset [ppm]', { min: -5, max: 15 }], ['D1', 'relaxation delay [s]', { min: 0, max: 30 }],
-    ['RG', 'receiver gain', { sel: RG_LIST }], ['SOLVENT', 'solvent', { sel: Object.keys(SOLVENTS) }], ['P1', 'f1 channel 90° pulse [µs] (calibrated)', { ro: 1 }]
+    ['RG', 'receiver gain', { sel: RG_LIST }], ['SOLVENT', 'solvent', { sel: Object.keys(SOLVENTS) }], ['P1', 'f1 channel 90° pulse [µs] — calibrate with paropt / pulsecal', { min: 0.25, max: 80 }]
   ];
   const PROC_DEF = [['SI', 'spectrum size', { sel: [16384, 32768, 65536] }], ['LB', 'line broadening [Hz]', { min: 0, max: 20 }],
     ['PHC0', 'zero-order phase [deg]', { min: -360, max: 360 }], ['PHC1', 'first-order phase [deg]', { min: -360, max: 360 }], ['SR', 'spectral reference [ppm]', { ro: 1 }]];
@@ -1546,8 +1812,10 @@ const SFX = (() => {
       const sm = SAMPLES.byId[S.data.sampleId], g = sm && sm.groups.find(x => x.id === sm.sn);
       if (g) {
         const c = dssPpm() + g.ppm, sn = S.spec.pk ? snr(c - 0.05, c + 0.05) : 0;
-        add(`S/N, ${sm.struct.keys[g.id]} (${g.ppm.toFixed(2)} ppm)`, sn.toFixed(0) + ' : 1', sn >= 250 ? 15 : sn >= 150 ? 11 : sn >= 60 ? 6 : 2, 15);
-      } else add('S/N', 'no sample', 0, 15);
+        add(`S/N, ${sm.struct.keys[g.id]} (${g.ppm.toFixed(2)} ppm)`, sn.toFixed(0) + ' : 1', sn >= 250 ? 10 : sn >= 150 ? 8 : sn >= 60 ? 4 : 1, 10);
+      } else add('S/N', 'no sample', 0, 10);
+      const p1e = Math.abs(S.data.p1rel - 1) * 100;
+      add('90° pulse (P1) calibrated', `${S.data.p1.toFixed(2)} µs (${p1e.toFixed(1)} % off)`, p1e < 3 ? 5 : p1e < 8 ? 2 : 0, 5);
       const pe = phaseErr();
       add('Phase correction', pe < 999 ? (pe < 3 ? 'good' : pe < 8 ? 'fair' : 'poor') + ` (${pe.toFixed(1)}° off)` : 'not phased', pe < 3 ? 10 : pe < 8 ? 6 : 0, 10);
       add('Baseline correction', S.spec.abs ? 'done' : 'not done', S.spec.abs ? 5 : 0, 5);
@@ -1564,7 +1832,7 @@ const SFX = (() => {
 
   // ------------------------------------------------------------------ assignment module
   const LCOL = ['#d9480f', '#1971c2', '#2f9e44', '#9c36b5', '#e8590c', '#0c8599', '#c2255c', '#5c940d', '#495057'];
-  const EXTRA_LBL = { solv: 'Solv', water: 'H₂O', ref: 'Ref' };
+  const EXTRA_LBL = { solv: 'Solv', water: 'H₂O', ref: 'Ref', imp: 'Imp' };
   function structSVG(st, reveal) {
     const sc = 46, pad = 26;
     const pts = Object.values(st.atoms).concat(st.markers.map(([, a, dx, dy]) => [st.atoms[a][0] + dx, st.atoms[a][1] + dy]));
@@ -1595,7 +1863,7 @@ const SFX = (() => {
   function asgRows(sm) {
     // true-ppm rows -> displayed ppm using the data's referencing
     const off = (S.data.ref || 0) - S.proc.SR;
-    return SAMPLES.rows(sm, SF).map(r => {
+    return SAMPLES.rows(sm, SF, S.imps[sm.id], S.data.dT || 0).map(r => {
       const lo = r.lo + off, hi = r.hi + off;
       const ka = Math.max(0, Math.floor(kOf(lo))), kb = Math.min(S.spec.SI - 1, Math.ceil(kOf(hi)));
       let I = 0, wsum = 0, wppm = 0;
@@ -1610,17 +1878,18 @@ const SFX = (() => {
     if (!S.spec || !S.spec.pk) return msg('Process the spectrum first: efp, apk (or .ph), abs.');
     const sm = SAMPLES.byId[S.data.sampleId], st = sm.struct;
     const rows = asgRows(sm);
-    const A = S.assign[sm.id] || (S.assign[sm.id] = { sel: rows.map(() => new Set()), normRow: rows.findIndex(r => !r.ans.has('ref') && !r.ans.has('solv') && !r.ans.has('water')), normH: 1, checked: false, reveal: false });
+    const A = S.assign[sm.id] || (S.assign[sm.id] = { sel: rows.map(() => new Set()), normRow: Math.max(0, rows.findIndex(r => !r.ans.has('ref') && !r.ans.has('solv') && !r.ans.has('water') && !r.ans.has('imp'))), normH: 1, checked: false, reveal: false });
     if (A.sel.length !== rows.length) A.sel = rows.map(() => new Set());
     const letters = [...new Set(st.markers.map(m => m[0]))].sort();
-    const extras = [...new Set(SAMPLES.signals(sm).filter(g => EXTRA_LBL[g.id]).map(g => g.id))];
+    const extras = [...new Set([...SAMPLES.signals(sm).filter(g => EXTRA_LBL[g.id]).map(g => g.id), 'imp'])];
+    const impNames = [...new Set(S.imps[sm.id].map(g => g.label))];
     const opts = [...letters, ...extras];
     const nf = rows[A.normRow] && rows[A.normRow].I ? A.normH / rows[A.normRow].I : 0;
     const keyList = letters.map(l => `<b style="color:${LCOL[letters.indexOf(l) % LCOL.length]}">${l}</b> = ${st.keys[l]}`).join(', ');
     let h = `<div class="asg"><div><div class="sbox">${structSVG(st)}</div>
       <div class="note"><b>${sm.mol}</b> in ${SAMPLES.SOLV[sm.solvent].name}. Letters mark proton groups; equivalent protons share a letter.
       Not every labelled proton must give a visible signal, and some rows contain solvent, water or reference signals.
-      ${A.reveal ? '<br><br>' + keyList : ''}</div></div><div>
+      ${A.reveal ? '<br><br>' + keyList + '<br>Contaminants in this tube: ' + (impNames.length ? impNames.join(', ') : 'none') : ''}</div></div><div>
       <div class="asgbar">Normalise integral of row <select id="asgNorm">${rows.map((r, i) => `<option value="${i}" ${i === A.normRow ? 'selected' : ''}>${i + 1}</option>`).join('')}</select>
       to <input id="asgNH" value="${A.normH}" style="width:40px"> H</div>
       <table class="asgT"><tr><th>#</th><th>δ (ppm)</th><th>range</th><th>integral</th><th>assignment</th><th></th><th></th></tr>`;
@@ -1659,6 +1928,7 @@ const SFX = (() => {
   <tr><td><code>lockdisp</code></td><td>show the lock display</td></tr>
   <tr><td><code>topshim</code></td><td>gradient shimming of Z1–Z5</td></tr>
   <tr><td><code>atma</code></td><td>automatic tuning/matching</td></tr>
+  <tr><td><code>paropt</code>, <code>pulsecal</code>, <code>getprosol</code></td><td>P1 array / automatic P1 / probe defaults</td></tr>
   <tr><td><code>rga</code></td><td>automatic receiver gain</td></tr>
   <tr><td><code>eda</code> / <code>edp</code></td><td>acquisition / processing parameters</td></tr>
   <tr><td><code>ns 16</code>, <code>d1 2</code>, <code>pulprog zg30</code>…</td><td>set a parameter (no value = show)</td></tr>
@@ -1672,7 +1942,11 @@ const SFX = (() => {
   <tr><td><code>fid</code>, <code>spec</code>, <code>.all</code>, <code>*2</code>, <code>/2</code></td><td>display (drag = zoom, wheel = scale, dbl-click = full)</td></tr>
   <tr><td><code>report</code></td><td>score the session</td></tr></table>
   <p><b>Pulse programs:</b> <code>zg30</code> (30° pulse, tolerant of short D1), <code>zg</code> (90°: needs D1 ≈ 5×T1 for quantitative integrals), <code>zgpr</code> (90° + presaturation <i>at O1P</i> — set O1P exactly on the water/solvent peak).</p>
-  <p><b>Assign tab:</b> after processing, label each signal with the proton group(s) on the structure.</p>
+  <p><b>Pulse calibration:</b> set <code>pulprog zg</code>, <code>ns 1</code>, <code>ds 0</code>, a long <code>d1</code>; acquire and phase a spectrum, zoom on a strong singlet, then <code>paropt P1 2 2 24</code>. The signal goes up (90°), through zero (180°), down, and through zero again at 360°: P1 = 360° null ÷ 4. <code>pulsecal</code> does it automatically; <code>getprosol</code> loads the probe default (9.80 µs). Tune (atma) before calibrating.</p>
+  <p><b>Presaturation (zgpr):</b> the water is irradiated at O1P during D1 — longer D1 suppresses it more (≈ 1–2 s is typical).</p>
+  <p><b>Phase cycle:</b> the receiver cycles in 4 steps; with NS not a multiple of 4 a quadrature image and a centre (O1) spike survive. <b>Spinning</b> narrows lines when X/Y are off but adds sidebands at ±20 Hz.</p>
+  <p><b>Temperature:</b> a freshly inserted sample needs about a minute (sped up) to reach 298 K; shims drift and HOD/OH/NH peaks move meanwhile.</p>
+  <p><b>Assign tab:</b> after processing, label each signal with the proton group(s) on the structure (Imp = contaminant).</p>
   <p>Console (right): select a parameter button, then turn the knob (drag or mouse wheel) or use − / +. FINE = small steps.</p>`;
   const cmdEl = $('cmd'), histC = []; let hi = 0;
   cmdEl.addEventListener('keydown', e => {
@@ -1708,8 +1982,10 @@ const SFX = (() => {
         case 'wobb': log('wobb: manual tuning is not simulated — use atma.', 'warn'); break;
         case 'rga': await cmdRga(); break;
         case 'zg': case 'go': await cmdZg(); break;
-        case 'halt': case 'stop': if (S.busy && S.busy.startsWith('zg')) { S.haltReq = true; log('halt: stopping after the current scan.'); } else log('halt: nothing running.'); break;
-        case 'getprosol': log('getprosol: pulse widths and power levels loaded from probehead table.', 'ok'); break;
+        case 'halt': case 'stop': if (S.busy && (S.busy.startsWith('zg') || S.busy.startsWith('paropt'))) { S.haltReq = true; log('halt: stopping after the current scan.'); } else log('halt: nothing running.'); break;
+        case 'getprosol': S.acqu.P1 = 9.8; renderPars(); log('getprosol: probehead defaults loaded (P1 = 9.80 µs). Calibrate P1 for this sample.', 'ok'); break;
+        case 'pulsecal': await cmdPulsecal(); break;
+        case 'paropt': case 'popt': await cmdParopt(arg); break;
         case 'ii': log('ii: interface initialised.', 'ok'); break;
         case 'rpar': log('rpar: parameter set PROTON loaded.', 'ok'); break;
         case 'eda': switchTab('vAcqu'); break;
