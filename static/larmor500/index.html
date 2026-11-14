@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Larmor 500 — NMR Spectrometer Simulator</title>
+<style>*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;font-family:"Segoe UI",Tahoma,Arial,sans-serif;font-size:12px;background:#1d2024}
+#app{display:grid;grid-template-columns:minmax(700px,1fr) 430px;height:100vh}
+/* ---------------- software (left) ---------------- */
+#sw{display:flex;flex-direction:column;background:#dfe5ec;min-width:0;border-right:3px solid #111}
+#titlebar{background:linear-gradient(#3d6ea8,#2c5788);color:#fff;padding:4px 10px;font-weight:600;display:flex;justify-content:space-between}
+#titlebar .sub{font-weight:400;opacity:.85}
+#menubar{display:flex;background:#eef1f5;border-bottom:1px solid #b9c3cf;position:relative;z-index:30}
+.menu{position:relative;padding:4px 10px;cursor:default}
+.menu:hover{background:#cfdbea}
+.menu .drop{display:none;position:absolute;left:0;top:100%;background:#fff;border:1px solid #9aa8b8;box-shadow:2px 3px 8px rgba(0,0,0,.25);min-width:230px;z-index:40}
+.menu:hover .drop{display:block}
+.drop div{padding:5px 12px;white-space:nowrap;display:flex;justify-content:space-between;gap:20px}
+.drop div:hover{background:#3d6ea8;color:#fff}
+.drop div span{opacity:.6;font-family:Consolas,monospace}
+#toolbar{display:flex;gap:2px;padding:3px 6px;background:#e8edf3;border-bottom:1px solid #b9c3cf;flex-wrap:wrap}
+#toolbar button{font-size:11px;padding:3px 7px;border:1px solid #aab6c4;background:linear-gradient(#fdfdfe,#e3e9f0);border-radius:2px;cursor:pointer}
+#toolbar button:hover{background:linear-gradient(#fff,#d0ddeb)}
+#toolbar .sep{width:1px;background:#aab6c4;margin:0 5px}
+#workspace{flex:1;display:flex;min-height:0}
+#browser{width:230px;background:#f4f6f9;border-right:1px solid #b9c3cf;display:flex;flex-direction:column;min-height:0}
+#browser h4{margin:0;padding:5px 8px;background:#d5dee9;font-size:11px;border-bottom:1px solid #b9c3cf}
+#tree{padding:6px 8px;font-family:Consolas,monospace;font-size:11px;line-height:1.6}
+#tree .sel{background:#3d6ea8;color:#fff;padding:0 3px}
+#objectives{flex:1;overflow:auto;padding:4px 6px}
+.obj{display:flex;gap:6px;padding:4px 2px;border-bottom:1px dotted #c8d0da}
+.obj .box{width:14px;height:14px;border:1px solid #7b8796;border-radius:2px;flex:none;margin-top:1px;background:#fff;font-size:11px;line-height:12px;text-align:center;color:#fff}
+.obj.done .box{background:#2f8f46;border-color:#2f8f46}
+.obj .t{font-weight:600}
+.obj .h{color:#5a6573;font-size:10.5px}
+.obj.done .t{color:#2f6f3e}
+#evalBtn{margin:6px;padding:6px;font-weight:600;border:1px solid #2c5788;background:#3d6ea8;color:#fff;border-radius:3px;cursor:pointer}
+#main{flex:1;display:flex;flex-direction:column;min-width:0}
+#tabs{display:flex;background:#d5dee9;border-bottom:1px solid #9aa8b8}
+.tab{padding:4px 14px;cursor:pointer;border-right:1px solid #b9c3cf}
+.tab.on{background:#fff;font-weight:600}
+#views{flex:1;position:relative;background:#fff;min-height:0}
+.view{position:absolute;inset:0;display:none}
+.view.on{display:block}
+#specCanvas{width:100%;height:100%;display:block;cursor:crosshair}
+#specInfo{position:absolute;right:10px;top:6px;font-family:Consolas,monospace;font-size:11px;color:#333;background:rgba(255,255,255,.85);padding:2px 5px;pointer-events:none}
+#modeBanner{position:absolute;left:10px;top:6px;font-size:11px;font-weight:600;color:#b00;display:none;background:#fff3c4;border:1px solid #d9b84a;padding:3px 8px}
+.ptable{border-collapse:collapse;margin:12px;font-family:Consolas,monospace;font-size:12px}
+.ptable td{border:1px solid #ccd5df;padding:3px 8px}
+.ptable td:first-child{background:#eef2f7;font-weight:600;width:110px}
+.ptable td:last-child{color:#5a6573;font-family:"Segoe UI",sans-serif;font-size:11px}
+.ptable input,.ptable select{font-family:Consolas,monospace;width:120px}
+.pview{overflow:auto;height:100%}
+#logwrap{height:96px;background:#fbfcfd;border-top:1px solid #9aa8b8;overflow:auto;font-family:Consolas,monospace;font-size:11.5px;padding:3px 8px}
+.log-err{color:#c01818}.log-warn{color:#a35d00}.log-ok{color:#1d7a33}.log-cmd{color:#2c5788}
+#cmdrow{display:flex;align-items:center;background:#e8edf3;border-top:1px solid #9aa8b8;padding:3px 6px;gap:6px}
+#cmdrow label{font-weight:600}
+#cmd{flex:1;font-family:Consolas,monospace;font-size:13px;padding:3px 6px;border:1px solid #8e9cad}
+#statusbar{display:flex;gap:18px;background:#2c3440;color:#cfd8e3;padding:3px 10px;font-family:Consolas,monospace;font-size:11px}
+#statusbar b{color:#fff}
+#busybar{height:3px;background:#3d6ea8;width:0;transition:width .2s}
+/* floating windows */
+.fwin{position:absolute;background:#e8edf3;border:1px solid #42566e;box-shadow:3px 5px 16px rgba(0,0,0,.4);z-index:20}
+.fwin .fh{background:linear-gradient(#3d6ea8,#2c5788);color:#fff;padding:3px 8px;cursor:move;display:flex;justify-content:space-between;font-weight:600;font-size:11px}
+.fwin .fh .x{cursor:pointer;padding:0 4px}
+#lockWin{right:12px;top:8px;width:400px}
+#lockCanvas{display:block;width:398px;height:210px;background:#000}
+#lockFoot{display:flex;justify-content:space-between;padding:3px 8px;font-family:Consolas,monospace;font-size:11px}
+#phaseWin{left:300px;top:110px;width:330px;display:none;padding-bottom:8px}
+#phaseWin .row{display:flex;align-items:center;gap:8px;padding:6px 10px}
+#phaseWin input[type=range]{flex:1}
+#phaseWin .val{width:60px;font-family:Consolas,monospace;text-align:right}
+#phaseWin button{margin:0 4px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal{background:#eef1f5;border:1px solid #42566e;min-width:320px;max-width:640px;box-shadow:4px 6px 20px rgba(0,0,0,.5)}
+.modal .mh{background:linear-gradient(#3d6ea8,#2c5788);color:#fff;padding:5px 10px;font-weight:600}
+.modal .mb{padding:12px 14px;max-height:70vh;overflow:auto;line-height:1.5}
+.modal .mf{padding:8px 12px;text-align:right;border-top:1px solid #c5ced9}
+.modal button{padding:4px 14px;margin-left:6px}
+.modal select{width:100%}
+.modal table{border-collapse:collapse;width:100%}
+.modal td{padding:3px 6px;border-bottom:1px solid #d5dce5}
+.modal code{background:#dde4ed;padding:0 3px}
+/* ---------------- console (right) ---------------- */
+#console{background:linear-gradient(#3a3f45,#2a2e33);color:#cfd4da;display:flex;flex-direction:column;padding:10px 12px;gap:9px;overflow:auto;user-select:none}
+#console h3{margin:0;font-size:12px;letter-spacing:2px;color:#9aa3ad;display:flex;justify-content:space-between;align-items:center}
+.panel{background:#24282c;border:1px solid #14171a;border-radius:6px;padding:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.panel .lbl{font-size:9.5px;letter-spacing:1.5px;color:#8a939d;margin-bottom:5px}
+#led{background:#050806;border:2px solid #000;border-radius:4px;padding:7px 10px;font-family:"Courier New",monospace;color:#5cff86;text-shadow:0 0 6px rgba(92,255,134,.6)}
+#led .l1{display:flex;justify-content:space-between;font-size:20px;font-weight:700}
+#led .l2{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:4px}
+#ledBar{flex:1;height:10px;border:1px solid #2a6e3c;position:relative}
+#ledBarFill{position:absolute;left:0;top:0;bottom:0;background:#5cff86;box-shadow:0 0 6px #5cff86}
+#led .l3{font-size:11px;color:#3fb45f;margin-top:3px;display:flex;justify-content:space-between}
+#knobRow{display:flex;align-items:center;gap:14px;justify-content:center}
+#knob{width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#6b7178,#2f3337 60%,#1b1e21);box-shadow:0 4px 10px rgba(0,0,0,.6),inset 0 2px 2px rgba(255,255,255,.15);position:relative;cursor:grab}
+#knob:active{cursor:grabbing}
+#knobMark{position:absolute;left:50%;top:8px;width:6px;height:20px;margin-left:-3px;background:#e7e9eb;border-radius:3px;transform-origin:3px 47px}
+#knobRidges{position:absolute;inset:6px;border-radius:50%;border:3px dotted rgba(0,0,0,.45)}
+.knobside{display:flex;flex-direction:column;gap:6px}
+.cbtn{position:relative;background:linear-gradient(#5a6068,#41464c);color:#e9ecef;border:1px solid #121416;border-radius:4px;padding:7px 4px 6px;font-size:10.5px;font-weight:700;letter-spacing:.5px;cursor:pointer;box-shadow:0 2px 0 #0d0f11;text-align:center;min-width:52px}
+.cbtn:active{transform:translateY(1px);box-shadow:0 1px 0 #0d0f11}
+.cbtn .dot{display:block;width:8px;height:8px;border-radius:50%;background:#30353a;margin:0 auto 4px;border:1px solid #111}
+.cbtn.on .dot{background:#4cff6e;box-shadow:0 0 6px #4cff6e}
+.cbtn.amber.on .dot{background:#ffb02e;box-shadow:0 0 6px #ffb02e}
+.cbtn.sel{outline:2px solid #ffb02e;outline-offset:1px}
+.grid{display:grid;gap:6px}
+.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g6{grid-template-columns:repeat(6,1fr)}
+#magnetPanel{display:flex;gap:10px;align-items:stretch}
+#magnetSvg{width:190px;height:200px;flex:none}
+#rack{flex:1;display:flex;flex-direction:column;gap:6px;font-size:10.5px}
+.meter{display:flex;align-items:center;gap:6px}
+.meter .bar{flex:1;height:8px;background:#111;border:1px solid #000}
+.meter .bar i{display:block;height:100%;background:#4aa3ff}
+#tubeRack{background:#1a1d20;border:1px solid #000;border-radius:4px;padding:6px;cursor:pointer;text-align:center}
+#tubeRack:hover{background:#262b30}
+#tubeRack svg{display:block;margin:2px auto}
+#sndRow{display:flex;gap:8px;align-items:center;font-size:10.5px}
+#sndRow input{flex:1}
+
+#sampleSel{width:100%;background:#1a1d20;color:#cfd4da;border:1px solid #000;font-size:11px;padding:3px}
+.asg{display:flex;gap:18px;padding:12px;align-items:flex-start;flex-wrap:wrap}
+.asg .sbox{background:#fafbfc;border:1px solid #ccd5df;padding:6px}
+.asg .note{font-size:11px;color:#5a6573;max-width:360px;margin-top:6px}
+.asgT{border-collapse:collapse;font-size:12px}
+.asgT th{background:#eef2f7;border:1px solid #ccd5df;padding:3px 6px;font-size:11px}
+.asgT td{border:1px solid #ccd5df;padding:3px 6px;font-family:Consolas,monospace}
+.tog{min-width:24px;margin:1px;padding:1px 5px;border:1px solid #9aa8b8;background:#fff;border-radius:3px;cursor:pointer;font-weight:700;font-family:"Segoe UI",sans-serif;font-size:11px}
+.tog.on{background:#3d6ea8;color:#fff;border-color:#2c5788}
+.tog.good{background:#2f8f46;color:#fff;border-color:#2f8f46}
+.tog.bad{background:#c03a3a;color:#fff;border-color:#c03a3a}
+.tog.miss{outline:2px dashed #2f8f46}
+.asgbar{display:flex;gap:10px;align-items:center;margin:8px 0;flex-wrap:wrap;font-size:12px}
+.asgbar button{padding:4px 12px}
+.zoomb{cursor:pointer;border:none;background:none;font-size:13px}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- ======================= SOFTWARE ======================= -->
+  <div id="sw">
+    <div id="titlebar"><span>Larmor 1.0 &nbsp;—&nbsp; <span id="dsName">caffeine_D2O</span> &nbsp;1 &nbsp;1</span><span class="sub">AV-500 simulator · /data/nmruser/nmr</span></div>
+    <div id="menubar">
+      <div class="menu">File<div class="drop">
+        <div data-cmd="rsh">Read shim file<span>rsh</span></div>
+        <div data-cmd="eda">Acquisition parameters<span>eda</span></div>
+        <div data-cmd="edp">Processing parameters<span>edp</span></div>
+        <div data-cmd="newgame">New session (reset)<span></span></div></div></div>
+      <div class="menu">Acquire<div class="drop">
+        <div data-cmd="ej">Eject sample<span>ej</span></div>
+        <div data-cmd="ij">Insert sample<span>ij</span></div>
+        <div data-cmd="lock">Lock<span>lock</span></div>
+        <div data-cmd="lockdisp">Lock display<span>lockdisp</span></div>
+        <div data-cmd="topshim">Shim (gradient)<span>topshim</span></div>
+        <div data-cmd="atma">Tune / match probe<span>atma</span></div>
+        <div data-cmd="rga">Receiver gain<span>rga</span></div>
+        <div data-cmd="expt">Experiment time<span>expt</span></div>
+        <div data-cmd="zg">Start acquisition<span>zg</span></div>
+        <div data-cmd="halt">Halt acquisition<span>halt</span></div></div></div>
+      <div class="menu">Process<div class="drop">
+        <div data-cmd="em">Exponential multiply<span>em</span></div>
+        <div data-cmd="ft">Fourier transform<span>ft</span></div>
+        <div data-cmd="efp">em + ft + pk<span>efp</span></div>
+        <div data-cmd="apk">Automatic phase correction<span>apk</span></div>
+        <div data-cmd=".ph">Manual phase correction<span>.ph</span></div>
+        <div data-cmd="abs">Baseline correction<span>abs</span></div></div></div>
+      <div class="menu">Analyse<div class="drop">
+        <div data-cmd=".cal">Calibrate axis (click peak)<span>.cal</span></div>
+        <div data-cmd="sref">Reference from lock solvent<span>sref</span></div>
+        <div data-cmd="pp">Peak picking<span>pp</span></div>
+        <div data-cmd="sino">Signal/noise<span>sino</span></div>
+        <div data-cmd="report">Evaluate my session<span>report</span></div></div></div>
+      <div class="menu">View<div class="drop">
+        <div data-cmd="fid">Show FID<span>fid</span></div>
+        <div data-cmd="spec">Show spectrum<span>spec</span></div>
+        <div data-cmd=".all">Full spectrum<span>.all</span></div></div></div>
+      <div class="menu">Help<div class="drop">
+        <div data-cmd="help">Command list<span>help</span></div>
+        <div data-cmd="about">About<span></span></div></div></div>
+    </div>
+    <div id="toolbar">
+      <button data-cmd="lockdisp">Lock disp</button><button data-cmd="lock">Lock</button><button data-cmd="topshim">TopShim</button><button data-cmd="atma">ATMA</button><button data-cmd="rga">RGA</button><button data-cmd="zg">ZG</button><button data-cmd="halt">Halt</button>
+      <span class="sep"></span>
+      <button data-cmd="efp">efp</button><button data-cmd="apk">apk</button><button data-cmd=".ph">Phase</button><button data-cmd="abs">abs</button><button data-cmd=".cal">Calib</button><button data-cmd="pp">Peaks</button>
+      <span class="sep"></span>
+      <button data-cmd=".all">Full</button><button data-cmd="*2">×2</button><button data-cmd="/2">÷2</button><button data-cmd="fid">FID</button><button data-cmd="spec">Spec</button>
+    </div>
+    <div id="workspace">
+      <div id="browser">
+        <h4>Data</h4>
+        <div id="tree">▾ /data/nmruser/nmr<br>&nbsp;&nbsp;▾ <span id="treeName">caffeine_D2O</span><br>&nbsp;&nbsp;&nbsp;&nbsp;▾ <span class="sel">1 — PROTON</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pdata/1</div>
+        <h4>Training checklist</h4>
+        <div id="objectives"></div>
+        <button id="evalBtn" data-cmd="report">Evaluate session</button>
+      </div>
+      <div id="main">
+        <div id="tabs"><div class="tab on" data-view="vSpec">Spectrum</div><div class="tab" data-view="vAcqu">AcquPars</div><div class="tab" data-view="vProc">ProcPars</div><div class="tab" data-view="vTitle">Title</div><div class="tab" data-view="vAssign">Assign</div></div>
+        <div id="views">
+          <div class="view on" id="vSpec"><canvas id="specCanvas"></canvas><div id="specInfo"></div><div id="modeBanner"></div></div>
+          <div class="view pview" id="vAcqu"></div>
+          <div class="view pview" id="vProc"></div>
+          <div class="view pview" id="vTitle"><div id="titleBody" style="padding:16px;font-family:Consolas,monospace;line-height:1.7"></div></div>
+          <div class="view pview" id="vAssign"></div>
+          <div class="fwin" id="lockWin"><div class="fh"><span>Lock Display</span><span class="x" data-close="lockWin">✕</span></div><canvas id="lockCanvas" width="398" height="210"></canvas><div id="lockFoot"><span id="lockMode">SWEEP</span><span id="lockLvlTxt">Level: —</span></div></div>
+          <div class="fwin" id="phaseWin"><div class="fh"><span>Phase correction</span><span class="x" id="phClose">✕</span></div>
+            <div class="row" style="font-size:11px;color:#444">Pivot at the tallest peak (red line). Drag sliders or type values.</div>
+            <div class="row"><b>PH0</b><input type="range" id="ph0" min="-180" max="180" step="0.1"><input class="val" id="ph0v"></div>
+            <div class="row"><b>PH1</b><input type="range" id="ph1" min="-180" max="180" step="0.1"><input class="val" id="ph1v"></div>
+            <div class="row" style="justify-content:flex-end"><button id="phReset">Reset</button><button id="phSave">Save &amp; return</button></div></div>
+        </div>
+        <div id="busybar"></div>
+        <div id="logwrap"></div>
+        <div id="cmdrow"><label>Command:</label><input id="cmd" autocomplete="off" spellcheck="false" placeholder="type a command, e.g. help"></div>
+        <div id="statusbar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= CONSOLE ======================= -->
+  <div id="console">
+    <h3><span>SHIM / LOCK CONTROL UNIT</span><span style="font-size:10px;letter-spacing:1px">500 MHz</span></h3>
+    <div id="led"><div class="l1"><span id="ledName">STANDBY</span><span id="ledVal"></span></div>
+      <div class="l2"><span>LOCK</span><div id="ledBar"><div id="ledBarFill"></div></div><span id="ledLvl">0%</span></div>
+      <div class="l3"><span id="ledStep">STEP COARSE</span><span id="ledState">LOCK OFF</span></div></div>
+    <div class="panel"><div id="knobRow">
+      <div class="knobside"><button class="cbtn" id="kMinus">◀ −</button><button class="cbtn amber" id="bFine"><span class="dot"></span>FINE</button></div>
+      <div id="knob"><div id="knobRidges"></div><div id="knobMark"></div></div>
+      <div class="knobside"><button class="cbtn" id="kPlus">+ ▶</button><button class="cbtn" id="bStby">STD BY</button></div>
+    </div></div>
+    <div class="panel"><div class="lbl">LOCK</div><div class="grid g4">
+      <button class="cbtn" id="bLock"><span class="dot"></span>LOCK<br>ON/OFF</button>
+      <button class="cbtn" data-sel="FIELD"><span class="dot"></span>FIELD</button>
+      <button class="cbtn" data-sel="LPHASE"><span class="dot"></span>LOCK<br>PHASE</button>
+      <button class="cbtn" data-sel="LGAIN"><span class="dot"></span>LOCK<br>GAIN</button>
+      <button class="cbtn" data-sel="LPOWER"><span class="dot"></span>LOCK<br>POWER</button>
+      <button class="cbtn" id="bSweep"><span class="dot"></span>SWEEP</button>
+      <button class="cbtn" id="bLift"><span class="dot"></span>LIFT<br>ON/OFF</button>
+      <button class="cbtn" id="bSpin"><span class="dot"></span>SPIN<br>ON/OFF</button>
+    </div></div>
+    <div class="panel"><div class="lbl">SHIM — ON-AXIS</div><div class="grid g6">
+      <button class="cbtn" data-sel="Z1"><span class="dot"></span>Z</button>
+      <button class="cbtn" data-sel="Z2"><span class="dot"></span>Z²</button>
+      <button class="cbtn" data-sel="Z3"><span class="dot"></span>Z³</button>
+      <button class="cbtn" data-sel="Z4"><span class="dot"></span>Z⁴</button>
+      <button class="cbtn" data-sel="Z5"><span class="dot"></span>Z⁵</button>
+      <button class="cbtn" id="bSpinRate" title="Spin rate"><span class="dot"></span>20 Hz</button>
+    </div>
+    <div class="lbl" style="margin-top:8px">SHIM — OFF-AXIS</div><div class="grid g6">
+      <button class="cbtn" data-sel="X"><span class="dot"></span>X</button>
+      <button class="cbtn" data-sel="Y"><span class="dot"></span>Y</button>
+      <button class="cbtn" data-sel="XZ"><span class="dot"></span>XZ</button>
+      <button class="cbtn" data-sel="YZ"><span class="dot"></span>YZ</button>
+      <button class="cbtn" data-sel="XY"><span class="dot"></span>XY</button>
+      <button class="cbtn" data-sel="X2Y2"><span class="dot"></span>X²−Y²</button>
+    </div></div>
+    <div class="panel"><div class="lbl">MAGNET &amp; SAMPLE</div><div id="magnetPanel">
+      <svg id="magnetSvg" viewBox="0 0 190 200"></svg>
+      <div id="rack">
+        <select id="sampleSel" title="Choose which tube to take from the rack"></select>
+        <div id="tubeRack" title="Click to place the sample on the air cushion (lift must be on)">
+          <svg width="20" height="62" viewBox="0 0 20 70" id="rackTube"><rect x="7" y="2" width="6" height="56" rx="3" fill="#e6f2ff" stroke="#9cc" /><rect x="7" y="34" width="6" height="22" fill="#9fd3ff"/><rect x="5" y="0" width="10" height="6" fill="#d33" id="rackCap"/></svg>
+          <div id="rackLbl">click tube to pick up</div></div>
+        <div class="meter"><span style="width:22px">He</span><div class="bar"><i id="heBar" style="width:71%"></i></div><span id="heTxt">71%</span></div>
+        <div class="meter"><span style="width:22px">N₂</span><div class="bar"><i id="n2Bar" style="width:63%;background:#9bd"></i></div><span id="n2Txt">63%</span></div>
+        <div style="color:#8a939d;line-height:1.4">Air: <b id="airTxt">OFF</b><br>Sample: <b id="smpTxt">in rack</b><br>Probe temp: <b>298.0 K</b></div>
+      </div></div></div>
+    <div class="panel" id="sndRow"><button class="cbtn on" id="bSnd" style="min-width:70px"><span class="dot"></span>SOUND</button><span>Vol</span><input type="range" id="vol" min="0" max="1" step="0.05" value="0.7"></div>
+  </div>
+</div>
+<script>// ===================== NMR simulation engine =====================
+// No spin physics: a voxel model of the B0 field inside the sample, perturbed by
+// shim errors, gives a frequency distribution. That distribution sets the lock
+// level, the lineshape, and (via a synthetic FID) the 1H spectrum.
+const NMR = (() => {
+  const SF = 500.13;            // 1H MHz
+  const LOCK_SF = 76.773;       // 2H MHz
+  const LOCK_RATIO = LOCK_SF / SF;
+  const SHIMS = ['Z1', 'Z2', 'Z3', 'Z4', 'Z5', 'X', 'Y', 'XZ', 'YZ', 'XY', 'X2Y2'];
+  const AXIAL = new Set(['Z1', 'Z2', 'Z3', 'Z4', 'Z5']);
+  // Hz of 1H field error per shim unit (at the edge of the normalised sample)
+  const HZ_PER_UNIT = { Z1: .020, Z2: .022, Z3: .018, Z4: .016, Z5: .012, X: .030, Y: .030, XZ: .024, YZ: .024, XY: .020, X2Y2: .020 };
+
+  function rng(seed) {
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(r) { let u = 0; while (u === 0) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+
+  // ---------- voxel grid of the sample inside the RF coil ----------
+  const VOX = (() => {
+    const NZ = 44, NR = 5, NT = 8, a = 0.22; // a = tube radius / coil half-length
+    const n = NZ * NR * NT;
+    const w = new Float64Array(n), resid = new Float64Array(n);
+    const basis = {}; SHIMS.forEach(s => basis[s] = new Float64Array(n));
+    let i = 0, wsum = 0;
+    for (let iz = 0; iz < NZ; iz++) {
+      const z = -1.3 + 2.6 * (iz + 0.5) / NZ;
+      const sens = 1 / (1 + Math.pow(z / 0.92, 8));
+      for (let ir = 0; ir < NR; ir++) {
+        const r = Math.sqrt((ir + 0.5) / NR);
+        for (let it = 0; it < NT; it++, i++) {
+          const th = 2 * Math.PI * (it + 0.5) / NT + ir * 0.37;
+          const x = r * Math.cos(th), y = r * Math.sin(th), rho2 = a * a * r * r;
+          w[i] = sens; wsum += sens;
+          basis.Z1[i] = z;
+          basis.Z2[i] = z * z - rho2 / 2 - 0.33;
+          basis.Z3[i] = z * z * z - 1.5 * z * rho2;
+          basis.Z4[i] = Math.pow(z, 4) - 3 * z * z * rho2 + 0.375 * rho2 * rho2 - 0.2;
+          basis.Z5[i] = Math.pow(z, 5) - 5 * Math.pow(z, 3) * rho2 + 1.875 * z * rho2 * rho2;
+          basis.X[i] = x; basis.Y[i] = y;
+          basis.XZ[i] = x * z; basis.YZ[i] = y * z;
+          basis.XY[i] = 2 * x * y; basis.X2Y2[i] = x * x - y * y;
+          // uncorrectable residual (higher orders / susceptibility)
+          resid[i] = 0.10 * Math.pow(z, 6) + 0.05 * Math.sin(3 * th) * r * r * r;
+        }
+      }
+    }
+    return { n, w, wsum, basis, resid };
+  })();
+
+  // field offsets (Hz, 1H) for every voxel
+  function fieldDeltas(shimErr, spin) {
+    const d = new Float64Array(VOX.n); d.set(VOX.resid);
+    for (const s of SHIMS) {
+      let k = HZ_PER_UNIT[s] * (shimErr[s] || 0);
+      if (!k) continue;
+      if (spin && !AXIAL.has(s)) k *= 0.12;
+      const b = VOX.basis[s];
+      for (let i = 0; i < d.length; i++) d[i] += k * b[i];
+    }
+    let m = 0; for (let i = 0; i < d.length; i++) m += VOX.w[i] * d[i];
+    m /= VOX.wsum;
+    for (let i = 0; i < d.length; i++) d[i] -= m;
+    return { d, mean: m };
+  }
+
+  // relative height (0..1) of the 2H lock resonance
+  function lockHeight(fd) {
+    const g = 0.10, g2 = g * g; let H = 0;
+    for (let i = 0; i < VOX.n; i++) { const x = fd.d[i] * LOCK_RATIO; H += VOX.w[i] * g2 / (g2 + x * x); }
+    return H / VOX.wsum;
+  }
+
+  function histogram(fd) {
+    let mn = Infinity, mx = -Infinity;
+    for (const v of fd.d) { if (v < mn) mn = v; if (v > mx) mx = v; }
+    const span = Math.max(mx - mn, 0.01);
+    const bin = Math.max(0.01, span / 400);
+    const nb = Math.ceil(span / bin) + 2;
+    const h = new Float64Array(nb);
+    for (let i = 0; i < VOX.n; i++) {
+      const p = (fd.d[i] - mn) / bin, j = Math.floor(p), f = p - j;
+      h[j] += VOX.w[i] * (1 - f); h[j + 1] += VOX.w[i] * f;
+    }
+    for (let j = 0; j < nb; j++) h[j] /= VOX.wsum;
+    return { f0: mn, bin, h };
+  }
+
+  // lineshape widths from the model (Hz): FWHM, width at 0.55 % and 0.11 %
+  function lineWidths(fd, natLw = 0.25) {
+    const hs = histogram(fd), gam = natLw / 2;
+    const lo = hs.f0 - 30, hi = hs.f0 + hs.bin * hs.h.length + 30;
+    const step = Math.max(0.005, (hi - lo) / 6000);
+    const n = Math.ceil((hi - lo) / step);
+    const L = new Float64Array(n); let pk = 0;
+    for (let k = 0; k < n; k++) {
+      const f = lo + k * step; let s = 0;
+      for (let j = 0; j < hs.h.length; j++) {
+        const hj = hs.h[j]; if (hj < 1e-7) continue;
+        const x = f - (hs.f0 + j * hs.bin); s += hj * gam / (gam * gam + x * x);
+      }
+      L[k] = s; if (s > pk) pk = s;
+    }
+    const width = frac => {
+      const t = pk * frac; let a = -1, b = -1;
+      for (let k = 0; k < n; k++) if (L[k] >= t) { if (a < 0) a = k; b = k; }
+      return (b - a) * step;
+    };
+    return { w50: width(0.5), w055: width(0.0055), w011: width(0.0011) };
+  }
+
+  // g(t): FID modulation from field inhomogeneity
+  function inhomFID(fd, N, dt) {
+    const hs = histogram(fd);
+    const gr = new Float64Array(N), gi = new Float64Array(N);
+    for (let j = 0; j < hs.h.length; j++) {
+      const a = hs.h[j]; if (a < 1e-6) continue;
+      const w = 2 * Math.PI * (hs.f0 + j * hs.bin) * dt, c = Math.cos(w), s = Math.sin(w);
+      let pr = a, pi = 0;
+      for (let n = 0; n < N; n++) {
+        gr[n] += pr; gi[n] += pi;
+        const t = pr * c - pi * s; pi = pr * s + pi * c; pr = t;
+      }
+    }
+    return { gr, gi };
+  }
+
+  // ---------- lines from signal definitions ----------
+  function pattern(n, mult) {
+    let p = [1];
+    for (let i = 0; i < n; i++) { const q = new Array(p.length + mult - 1).fill(0); p.forEach((v, j) => { for (let k = 0; k < mult; k++) q[j + k] += v; }); p = q; }
+    const t = p.reduce((a, b) => a + b, 0); return p.map(v => v / t);
+  }
+  function linesFor(signals) {
+    const L = [];
+    for (const g of signals) {
+      let comps = [{ off: 0, a: 1 }];
+      for (const [J, n, spin1] of (g.split || [])) {
+        const pat = pattern(n, spin1 ? 3 : 2), c = (pat.length - 1) / 2, nc = [];
+        comps.forEach(cp => pat.forEach((p, i) => nc.push({ off: cp.off + (i - c) * J, a: cp.a * p })));
+        comps = nc;
+      }
+      const amp = g.n * g.conc;
+      let main = 1; if (g.sat) main -= 0.011; if (g.si) main -= 0.047;
+      const add = (dHz, f) => comps.forEach(cp => L.push({ ppm: g.ppm + (cp.off + dHz) / SF, amp: amp * cp.a * f, lw: g.lw, t1: g.t1, tag: g.id }));
+      add(0, main);
+      if (g.sat) { add(g.sat / 2, 0.0055); add(-g.sat / 2, 0.0055); }
+      if (g.si) { add(3.3, 0.0235); add(-3.3, 0.0235); }
+    }
+    return L;
+  }
+
+  // noiseless FIDs grouped by T1 (complex, unit flip, not RG-scaled)
+  // o: {N, swh, o1p, refShift(ppm), fd, lines, presat(bool)}
+  function synthGroups(o) {
+    const N = o.N, dt = 1 / o.swh;
+    const { gr, gi } = inhomFID(o.fd, N, dt);
+    const groups = new Map();
+    for (const ln of o.lines) {
+      const ppmApp = ln.ppm + o.refShift;
+      let amp = ln.amp;
+      if (o.presat) { const d = (ppmApp - o.o1p) * SF; amp *= 1 - 0.97 * Math.exp(-(d / 18) * (d / 18)); }
+      if (amp < 1e-9) continue;
+      let g = groups.get(ln.t1);
+      if (!g) { g = { t1: ln.t1, re: new Float64Array(N), im: new Float64Array(N) }; groups.set(ln.t1, g); }
+      const f = (ppmApp - o.o1p) * SF;
+      const w = 2 * Math.PI * f * dt, c = Math.cos(w), s = Math.sin(w);
+      const dec = Math.exp(-Math.PI * (ln.lw + (o.extraLw || 0)) * dt);
+      let pr = amp, pi = 0; const re = g.re, im = g.im;
+      for (let n = 0; n < N; n++) {
+        re[n] += pr; im[n] += pi;
+        const t = (pr * c - pi * s) * dec; pi = (pr * s + pi * c) * dec; pr = t;
+      }
+    }
+    for (const g of groups.values()) {
+      for (let n = 0; n < N; n++) { const a = g.re[n] * gr[n] - g.im[n] * gi[n], b = g.re[n] * gi[n] + g.im[n] * gr[n]; g.re[n] = a; g.im[n] = b; }
+    }
+    return [...groups.values()];
+  }
+
+  // in-place radix-2 FFT
+  function fft(re, im) {
+    const n = re.length;
+    for (let i = 1, j = 0; i < n; i++) {
+      let bit = n >> 1;
+      for (; j & bit; bit >>= 1) j ^= bit;
+      j ^= bit;
+      if (i < j) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+    }
+    for (let len = 2; len <= n; len <<= 1) {
+      const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+      for (let i = 0; i < n; i += len) {
+        let cr = 1, ci = 0;
+        for (let j = 0; j < len / 2; j++) {
+          const a = i + j, b = a + len / 2;
+          const tr = re[b] * cr - im[b] * ci, ti = re[b] * ci + im[b] * cr;
+          re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+          const t = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = t;
+        }
+      }
+    }
+  }
+
+  // FID -> spectrum (complex, frequency ascending), with em + zero fill
+  function transform(fidRe, fidIm, SI, lb, swh) {
+    const re = new Float64Array(SI), im = new Float64Array(SI);
+    const N = Math.min(fidRe.length, SI), dt = 1 / swh;
+    for (let n = 0; n < N; n++) {
+      const e = Math.exp(-Math.PI * lb * n * dt);
+      re[n] = fidRe[n] * e; im[n] = fidIm[n] * e;
+    }
+    re[0] *= 0.5; im[0] *= 0.5;
+    fft(re, im);
+    // fftshift
+    const h = SI / 2, R = new Float64Array(SI), I = new Float64Array(SI);
+    for (let k = 0; k < SI; k++) { R[k] = re[(k + h) % SI]; I[k] = im[(k + h) % SI]; }
+    return { re: R, im: I };
+  }
+
+  return { SF, LOCK_RATIO, SHIMS, AXIAL, HZ_PER_UNIT, rng, gauss, fieldDeltas, lockHeight, lineWidths, synthGroups, linesFor, transform, fft, VOX };
+})();
+if (typeof module !== 'undefined') module.exports = NMR;
+
+// ===================== sample library =====================
+// Each signal: id (assignment letter), ppm, n (H count), split [[J Hz, n nuclei, spin1?]], lw (Hz), t1 (s)
+// conc (mM) is per sample; amplitude = n * conc.
+const SAMPLES = (() => {
+  // physical solvent data: 2H lock strength, saturation (dB) and residual signals
+  const SOLV = {
+    D2O: { name: 'D₂O', lockKey: 'D2O', ppm: 4.79, lockStr: 1.0, ps: -16,
+      extras: [{ id: 'solv', label: 'HOD (residual solvent)', ppm: 4.790, n: 1, conc: 120, lw: 1.1, t1: 8 }] },
+    CDCl3: { name: 'CDCl₃', lockKey: 'CDCl3', ppm: 7.26, lockStr: 0.42, ps: -22,
+      extras: [{ id: 'solv', label: 'CHCl₃ (residual solvent)', ppm: 7.260, n: 1, conc: 25, lw: 0.35, t1: 9, sat: 209 },
+               { id: 'water', label: 'H₂O (dissolved water)', ppm: 1.560, n: 1, conc: 4, lw: 2.5, t1: 1.5 }] },
+    DMSO: { name: 'DMSO-d₆', lockKey: 'DMSO', ppm: 2.50, lockStr: 0.75, ps: -19,
+      extras: [{ id: 'solv', label: 'DMSO-d₅ (residual solvent)', ppm: 2.500, n: 1, conc: 30, lw: 0.45, t1: 3, split: [[1.9, 2, 1]] },
+               { id: 'water', label: 'H₂O / HOD', ppm: 3.330, n: 1, conc: 35, lw: 4, t1: 1.5 }] }
+  };
+  const REF = {
+    DSS: [{ id: 'ref', label: 'DSS Si(CH₃)₃', ppm: 0, n: 9, conc: 0.5, lw: 0.25, t1: 2.2, sat: 118.6, si: true },
+          { id: 'ref', label: 'DSS CH₂', ppm: 2.912, n: 2, conc: 0.5, split: [[8.1, 2]], lw: 0.35, t1: 1.5 },
+          { id: 'ref', label: 'DSS CH₂', ppm: 1.755, n: 2, conc: 0.5, split: [[7.9, 4]], lw: 0.45, t1: 1.5 },
+          { id: 'ref', label: 'DSS CH₂', ppm: 0.628, n: 2, conc: 0.5, split: [[8.4, 2]], lw: 0.7, t1: 1.5 }],
+    TMS: [{ id: 'ref', label: 'TMS', ppm: 0, n: 12, conc: 0.5, lw: 0.25, t1: 4, sat: 118.0, si: true }]
+  };
+
+  // ---------- structures (unit bond length, y up) ----------
+  const hexV = (cx, cy, flat) => [0, 1, 2, 3, 4, 5].map(i => { const a = flat ? 90 - 60 * i : 60 * i; return [cx + Math.cos(a * Math.PI / 180), cy + Math.sin(a * Math.PI / 180)]; });
+  const ring = (names, flat, cx = 0, cy = 0) => { const v = hexV(cx, cy, flat), o = {}; names.forEach((n, i) => o[n] = v[i]); return o; };
+
+  const CAFFEINE = {
+    atoms: { ...ring(['C6', 'C5', 'C4', 'N3', 'C2', 'N1'], true), N7: [1.817, 0.809], C8: [2.405, 0], N9: [1.817, -0.809],
+      O6: [0, 2], O2: [-1.732, -1], M1: [-1.732, 1], M3: [0, -2], M7: [2.25, 1.75] },
+    labels: { N1: 'N', N3: 'N', N7: 'N', N9: 'N', O6: 'O', O2: 'O', M1: 'CH₃', M3: 'CH₃', M7: 'CH₃' },
+    bonds: [['C6', 'N1'], ['N1', 'C2'], ['C2', 'N3'], ['N3', 'C4'], ['C4', 'C5', 2], ['C5', 'C6'], ['C5', 'N7'], ['N7', 'C8'], ['C8', 'N9', 2], ['N9', 'C4'],
+      ['C6', 'O6', 2], ['C2', 'O2', 2], ['N1', 'M1'], ['N3', 'M3'], ['N7', 'M7']],
+    markers: [['a', 'C8', 0.75, 0], ['b', 'M7', 0.75, 0.15], ['c', 'M3', 0.8, 0], ['d', 'M1', -0.15, 0.7]],
+    keys: { a: 'H-8', b: 'N7–CH₃', c: 'N3–CH₃', d: 'N1–CH₃' }
+  };
+  const ETOAC = {
+    atoms: { Ca: [0, 0], C1: [0.866, 0.5], O1: [0.866, 1.5], O2: [1.732, 0], C2: [2.598, 0.5], C3: [3.464, 0] },
+    labels: { Ca: 'H₃C', O1: 'O', O2: 'O', C2: 'CH₂', C3: 'CH₃' },
+    bonds: [['Ca', 'C1'], ['C1', 'O1', 2], ['C1', 'O2'], ['O2', 'C2'], ['C2', 'C3']],
+    markers: [['a', 'Ca', -0.1, -0.75], ['b', 'C2', 0, 0.75], ['c', 'C3', 0.2, -0.75]],
+    keys: { a: 'CH₃C=O', b: 'OCH₂', c: 'CH₂CH₃' }
+  };
+  const ASPIRIN = {
+    atoms: { ...ring(['C6', 'C1', 'C2', 'C3', 'C4', 'C5'], true), Cc: [1.732, 1], Oc1: [1.732, 2], Oc2: [2.598, 0.5], Oa: [1.732, -1], Ca: [1.732, -2], Oa2: [0.866, -2.5], Ma: [2.598, -2.5] },
+    labels: { Oc1: 'O', Oc2: 'OH', Oa: 'O', Oa2: 'O', Ma: 'CH₃' },
+    bonds: [['C1', 'C2', 2], ['C2', 'C3'], ['C3', 'C4', 2], ['C4', 'C5'], ['C5', 'C6', 2], ['C6', 'C1'], ['C1', 'Cc'], ['Cc', 'Oc1', 2], ['Cc', 'Oc2'], ['C2', 'Oa'], ['Oa', 'Ca'], ['Ca', 'Oa2', 2], ['Ca', 'Ma']],
+    markers: [['a', 'C6', 0, 0.75], ['b', 'C4', -0.65, -0.4], ['c', 'C5', -0.65, 0.4], ['d', 'C3', -0.35, -0.7], ['e', 'Ma', 0.2, -0.7], ['f', 'Oc2', 0.75, 0]],
+    keys: { a: 'H-6', b: 'H-4', c: 'H-5', d: 'H-3', e: 'OCOCH₃', f: 'COOH' }
+  };
+  const IBU = {
+    atoms: { ...ring(['R1', 'R2', 'R3', 'R4', 'R5', 'R6'], false), Ca: [2, 0], Me1: [2.5, 0.866], Cc: [2.5, -0.866], O1: [3.5, -0.866], O2: [2, -1.732],
+      Cb: [-2, 0], Cd: [-2.5, 0.866], Me2: [-2, 1.732], Me3: [-3.5, 0.866] },
+    labels: { Me1: 'CH₃', O1: 'OH', O2: 'O', Me2: 'CH₃', Me3: 'H₃C' },
+    bonds: [['R1', 'R2', 2], ['R2', 'R3'], ['R3', 'R4', 2], ['R4', 'R5'], ['R5', 'R6', 2], ['R6', 'R1'], ['R1', 'Ca'], ['Ca', 'Me1'], ['Ca', 'Cc'], ['Cc', 'O1'], ['Cc', 'O2', 2],
+      ['R4', 'Cb'], ['Cb', 'Cd'], ['Cd', 'Me2'], ['Cd', 'Me3']],
+    markers: [['a', 'R2', 0.3, 0.65], ['a', 'R6', 0.3, -0.65], ['b', 'R3', -0.3, 0.65], ['b', 'R5', -0.3, -0.65], ['c', 'Ca', -0.1, -0.7], ['d', 'Cb', 0, -0.7],
+      ['e', 'Cd', -0.55, -0.4], ['f', 'Me1', 0.75, 0.2], ['g', 'Me2', 0.7, 0.2], ['g', 'Me3', -0.15, 0.7], ['h', 'O1', 0.75, 0]],
+    keys: { a: 'ArH ortho to CH', b: 'ArH ortho to CH₂', c: 'CHCOOH', d: 'ArCH₂', e: 'CH(CH₃)₂', f: 'CHCH₃', g: 'CH(CH₃)₂', h: 'COOH' }
+  };
+  const PARA = {
+    atoms: { ...ring(['R1', 'R2', 'R3', 'R4', 'R5', 'R6'], false), N: [2, 0], Cc: [2.5, 0.866], Oc: [2, 1.732], Me: [3.5, 0.866], Oh: [-2, 0] },
+    labels: { N: 'NH', Oc: 'O', Me: 'CH₃', Oh: 'HO' },
+    bonds: [['R1', 'R2', 2], ['R2', 'R3'], ['R3', 'R4', 2], ['R4', 'R5'], ['R5', 'R6', 2], ['R6', 'R1'], ['R1', 'N'], ['N', 'Cc'], ['Cc', 'Oc', 2], ['Cc', 'Me'], ['R4', 'Oh']],
+    markers: [['a', 'N', 0, -0.72], ['b', 'Oh', -0.2, -0.72], ['c', 'R2', 0.3, 0.65], ['c', 'R6', 0.3, -0.65], ['d', 'R3', -0.3, 0.65], ['d', 'R5', -0.3, -0.65], ['e', 'Me', 0.1, -0.72]],
+    keys: { a: 'NH', b: 'OH', c: 'ArH ortho to NH', d: 'ArH ortho to OH', e: 'COCH₃' }
+  };
+  const VAN = {
+    atoms: { ...ring(['R1', 'R2', 'R3', 'R4', 'R5', 'R6'], false), Cf: [2, 0], Of: [2.5, 0.866], Om: [-1, 1.732], Mm: [-2, 1.732], Oh: [-2, 0] },
+    labels: { Of: 'O', Om: 'O', Mm: 'CH₃', Oh: 'HO' },
+    bonds: [['R1', 'R2', 2], ['R2', 'R3'], ['R3', 'R4', 2], ['R4', 'R5'], ['R5', 'R6', 2], ['R6', 'R1'], ['R1', 'Cf'], ['Cf', 'Of', 2], ['R3', 'Om'], ['Om', 'Mm'], ['R4', 'Oh']],
+    markers: [['a', 'Cf', 0.3, -0.7], ['b', 'R6', 0.3, -0.65], ['c', 'R2', 0.35, 0.65], ['d', 'R5', -0.3, -0.65], ['e', 'Oh', -0.2, -0.72], ['f', 'Mm', -0.1, 0.72]],
+    keys: { a: 'CHO', b: 'H-6', c: 'H-2', d: 'H-5', e: 'OH', f: 'OCH₃' }
+  };
+
+  const list = [
+    { id: 'caf_d2o', name: 'Caffeine in D₂O (DSS)', short: 'caffeine_D2O', mol: 'Caffeine', solvent: 'D2O', ref: 'DSS', conc: 10, sn: 'a', struct: CAFFEINE,
+      groups: [{ id: 'a', ppm: 7.862, n: 1, lw: 0.55, t1: 6.0 }, { id: 'b', ppm: 3.912, n: 3, lw: 0.28, t1: 2.6, sat: 143.5 },
+        { id: 'c', ppm: 3.479, n: 3, lw: 0.28, t1: 2.3, sat: 141.0 }, { id: 'd', ppm: 3.314, n: 3, lw: 0.28, t1: 2.1, sat: 140.2 }] },
+    { id: 'caf_cdcl3', name: 'Caffeine in CDCl₃ (TMS)', short: 'caffeine_CDCl3', mol: 'Caffeine', solvent: 'CDCl3', ref: 'TMS', conc: 20, sn: 'a', struct: CAFFEINE,
+      groups: [{ id: 'a', ppm: 7.510, n: 1, lw: 0.5, t1: 7.0 }, { id: 'b', ppm: 3.998, n: 3, lw: 0.28, t1: 2.8, sat: 143.5 },
+        { id: 'c', ppm: 3.578, n: 3, lw: 0.28, t1: 2.4, sat: 141.0 }, { id: 'd', ppm: 3.410, n: 3, lw: 0.28, t1: 2.2, sat: 140.2 }] },
+    { id: 'etoac', name: 'Ethyl acetate in CDCl₃ (TMS)', short: 'ethylacetate_CDCl3', mol: 'Ethyl acetate', solvent: 'CDCl3', ref: 'TMS', conc: 25, sn: 'b', struct: ETOAC,
+      groups: [{ id: 'a', ppm: 2.045, n: 3, lw: 0.3, t1: 4.5, sat: 129 }, { id: 'b', ppm: 4.120, n: 2, split: [[7.1, 3]], lw: 0.3, t1: 5.0 },
+        { id: 'c', ppm: 1.261, n: 3, split: [[7.1, 2]], lw: 0.3, t1: 4.0 }] },
+    { id: 'ibu', name: 'Ibuprofen in CDCl₃ (TMS)', short: 'ibuprofen_CDCl3', mol: 'Ibuprofen', solvent: 'CDCl3', ref: 'TMS', conc: 25, sn: 'c', struct: IBU,
+      groups: [{ id: 'a', ppm: 7.215, n: 2, split: [[8.1, 1]], lw: 0.4, t1: 3.0 }, { id: 'b', ppm: 7.100, n: 2, split: [[8.1, 1]], lw: 0.4, t1: 3.0 },
+        { id: 'c', ppm: 3.700, n: 1, split: [[7.2, 3]], lw: 0.4, t1: 3.0 }, { id: 'd', ppm: 2.447, n: 2, split: [[7.2, 1]], lw: 0.4, t1: 1.5 },
+        { id: 'e', ppm: 1.845, n: 1, split: [[6.8, 8]], lw: 0.5, t1: 2.5 }, { id: 'f', ppm: 1.502, n: 3, split: [[7.2, 1]], lw: 0.35, t1: 1.5 },
+        { id: 'g', ppm: 0.899, n: 6, split: [[6.6, 1]], lw: 0.35, t1: 2.0 }, { id: 'h', ppm: 11.20, n: 1, lw: 60, t1: 1.0 }] },
+    { id: 'asp', name: 'Aspirin in DMSO-d₆ (TMS)', short: 'aspirin_DMSO', mol: 'Aspirin', solvent: 'DMSO', ref: 'TMS', conc: 25, sn: 'a', struct: ASPIRIN,
+      groups: [{ id: 'a', ppm: 7.920, n: 1, split: [[7.8, 1], [1.7, 1]], lw: 0.45, t1: 3.5 }, { id: 'b', ppm: 7.625, n: 1, split: [[7.8, 2], [1.7, 1]], lw: 0.45, t1: 3.5 },
+        { id: 'c', ppm: 7.360, n: 1, split: [[7.6, 2], [1.0, 1]], lw: 0.45, t1: 3.5 }, { id: 'd', ppm: 7.170, n: 1, split: [[8.1, 1], [1.0, 1]], lw: 0.45, t1: 3.5 },
+        { id: 'e', ppm: 2.230, n: 3, lw: 0.3, t1: 2.5, sat: 130 }, { id: 'f', ppm: 13.10, n: 1, lw: 45, t1: 1.0 }] },
+    { id: 'para_dmso', name: 'Paracetamol in DMSO-d₆ (TMS)', short: 'paracetamol_DMSO', mol: 'Paracetamol', solvent: 'DMSO', ref: 'TMS', conc: 25, sn: 'd', struct: PARA,
+      groups: [{ id: 'a', ppm: 9.650, n: 1, lw: 3, t1: 1.2 }, { id: 'b', ppm: 9.140, n: 1, lw: 3, t1: 1.2 },
+        { id: 'c', ppm: 7.345, n: 2, split: [[8.9, 1]], lw: 0.45, t1: 2.5 }, { id: 'd', ppm: 6.680, n: 2, split: [[8.9, 1]], lw: 0.45, t1: 2.5 },
+        { id: 'e', ppm: 1.980, n: 3, lw: 0.3, t1: 2.0, sat: 129 }] },
+    { id: 'para_d2o', name: 'Paracetamol in D₂O (DSS)', short: 'paracetamol_D2O', mol: 'Paracetamol', solvent: 'D2O', ref: 'DSS', conc: 10, sn: 'd', struct: PARA,
+      groups: [{ id: 'c', ppm: 7.245, n: 2, split: [[8.9, 1]], lw: 0.45, t1: 2.8 }, { id: 'd', ppm: 6.895, n: 2, split: [[8.9, 1]], lw: 0.45, t1: 2.8 },
+        { id: 'e', ppm: 2.135, n: 3, lw: 0.3, t1: 2.2, sat: 129 }] },
+    { id: 'van', name: 'Vanillin in CDCl₃ (TMS)', short: 'vanillin_CDCl3', mol: 'Vanillin', solvent: 'CDCl3', ref: 'TMS', conc: 25, sn: 'd', struct: VAN,
+      groups: [{ id: 'a', ppm: 9.830, n: 1, lw: 0.5, t1: 4.0 }, { id: 'b', ppm: 7.437, n: 1, split: [[8.0, 1], [1.8, 1]], lw: 0.45, t1: 3.2 },
+        { id: 'c', ppm: 7.420, n: 1, split: [[1.8, 1]], lw: 0.45, t1: 3.5 }, { id: 'd', ppm: 7.040, n: 1, split: [[8.0, 1]], lw: 0.45, t1: 3.2 },
+        { id: 'e', ppm: 6.200, n: 1, lw: 8, t1: 1.0 }, { id: 'f', ppm: 3.970, n: 3, lw: 0.3, t1: 2.2, sat: 145 }] }
+  ];
+
+  // every signal of a sample (compound + solvent extras + reference)
+  function signals(s) {
+    return [...s.groups.map(g => ({ ...g, conc: s.conc, label: s.struct.keys[g.id] })), ...SOLV[s.solvent].extras, ...REF[s.ref]];
+  }
+  // half-width (Hz) of a multiplet
+  const halfHz = g => (g.split || []).reduce((a, [J, n, sp]) => a + J * n * (sp ? 1 : 0.5), 0) + 3 * g.lw + 2.5;
+  // assignment rows (true ppm), overlapping multiplets merged
+  function rows(s, SF) {
+    const r = signals(s).map(g => ({ lo: g.ppm - halfHz(g) / SF - 0.006, hi: g.ppm + halfHz(g) / SF + 0.006, ans: new Set([g.id]), n: g.n }))
+      .sort((a, b) => b.hi - a.hi);
+    const out = [];
+    for (const x of r) {
+      const last = out[out.length - 1];
+      if (last && x.hi >= last.lo) { last.lo = Math.min(last.lo, x.lo); x.ans.forEach(v => last.ans.add(v)); }
+      else out.push(x);
+    }
+    return out;
+  }
+  return { SOLV, REF, list, byId: Object.fromEntries(list.map(s => [s.id, s])), signals, rows };
+})();
+
+// ===================== synthesized lab sounds (Web Audio) =====================
+const SFX = (() => {
+  let ctx = null, master = null, enabled = true, ambient = null, liftNode = null, cryoTimer = null;
+  let noiseBuf = null;
+
+  function init() { try { init0(); } catch (e) { console.warn('audio unavailable', e); } }
+  function init0() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    ctx = new AC();
+    master = ctx.createGain(); master.gain.value = 0.7; master.connect(ctx.destination);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    startAmbient();
+  }
+  function noiseSrc(loop = true) { const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.loop = loop; return s; }
+
+  // room / console fans: low broadband rumble + faint mains hum
+  function startAmbient() {
+    const n = noiseSrc(); const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 260;
+    const g = ctx.createGain(); g.gain.value = 0.05; n.connect(lp); lp.connect(g); g.connect(master); n.start();
+    const hum = ctx.createOscillator(); hum.frequency.value = 120; const hg = ctx.createGain(); hg.gain.value = 0.006;
+    hum.connect(hg); hg.connect(master); hum.start();
+    ambient = { n, hum };
+    scheduleCryo();
+  }
+
+  // helium compressor / cold head: rhythmic "whoosh ... chirp" about once a second
+  function scheduleCryo() {
+    const period = 1.18;
+    let next = ctx.currentTime + 0.2;
+    cryoTimer = setInterval(() => {
+      while (next < ctx.currentTime + 0.5) { cryoCycle(next, period); next += period; }
+    }, 200);
+  }
+  function cryoCycle(t, period) {
+    // intake whoosh
+    const n = noiseSrc(false); const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.4;
+    bp.frequency.setValueAtTime(700, t); bp.frequency.exponentialRampToValueAtTime(2600, t + 0.28);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.16, t + 0.06); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
+    n.connect(bp); bp.connect(g); g.connect(master); n.start(t, Math.random()); n.stop(t + 0.55);
+    // high-pitched valve chirp
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(2900, t + 0.02); o.frequency.exponentialRampToValueAtTime(3500, t + 0.12);
+    const og = ctx.createGain(); og.gain.setValueAtTime(0.0001, t);
+    og.gain.exponentialRampToValueAtTime(0.025, t + 0.03); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(og); og.connect(master); o.start(t); o.stop(t + 0.2);
+    // softer exhaust whoosh half a cycle later
+    const t2 = t + period / 2;
+    const n2 = noiseSrc(false); const bp2 = ctx.createBiquadFilter(); bp2.type = 'bandpass'; bp2.Q.value = 1.0;
+    bp2.frequency.setValueAtTime(1800, t2); bp2.frequency.exponentialRampToValueAtTime(600, t2 + 0.35);
+    const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.0001, t2);
+    g2.gain.exponentialRampToValueAtTime(0.08, t2 + 0.05); g2.gain.exponentialRampToValueAtTime(0.0001, t2 + 0.4);
+    n2.connect(bp2); bp2.connect(g2); g2.connect(master); n2.start(t2, Math.random()); n2.stop(t2 + 0.45);
+  }
+
+  function tone(freq, dur, vol = 0.08, type = 'sine', when = 0) {
+    if (!ctx || !enabled) return;
+    const t = ctx.currentTime + when;
+    const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function click() { tone(1800, 0.025, 0.05, 'square'); }
+  function tick() { tone(3200, 0.012, 0.02, 'square'); }
+  function beep() { tone(1046, 0.18, 0.08, 'sine'); }
+  function alarm() { tone(880, 0.15, 0.1, 'square'); tone(660, 0.15, 0.1, 'square', 0.2); tone(880, 0.15, 0.1, 'square', 0.4); }
+  function chime() { tone(784, 0.25, 0.07); tone(1046, 0.4, 0.07, 'sine', 0.18); }
+  function relay() { tone(140, 0.03, 0.08, 'square'); tone(2400, 0.01, 0.02, 'square', 0.04); }
+
+  // sample lift air: continuous hiss while on
+  function lift(on) {
+    if (!ctx) return;
+    if (on && !liftNode) {
+      const n = noiseSrc(); const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1500;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7000;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.09, ctx.currentTime + 0.4);
+      n.connect(hp); hp.connect(lp); lp.connect(g); g.connect(master); n.start();
+      liftNode = { n, g };
+    } else if (!on && liftNode) {
+      const { n, g } = liftNode; const t = ctx.currentTime;
+      g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
+      n.stop(t + 0.9); liftNode = null;
+    }
+  }
+  function thunk() { tone(110, 0.12, 0.15, 'sine'); tone(2600, 0.02, 0.03, 'square', 0.01); }
+
+  // tuning/matching motor whirr
+  function motor(dur) {
+    if (!ctx || !enabled) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(70, t);
+    for (let k = 0; k < dur; k += 0.7) o.frequency.linearRampToValueAtTime(60 + Math.random() * 50, t + k + 0.35);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 600;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.03, t + 0.1);
+    g.gain.setValueAtTime(0.03, t + dur - 0.2); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(lp); lp.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.1);
+  }
+
+  function setEnabled(on) { enabled = on; if (master) master.gain.setTargetAtTime(on ? 0.7 : 0, ctx.currentTime, 0.05); }
+  function setVolume(v) { if (master && enabled) master.gain.setTargetAtTime(v, ctx.currentTime, 0.05); }
+
+  return { init, click, tick, beep, alarm, chime, relay, lift, thunk, motor, setEnabled, setVolume, get enabled() { return enabled; } };
+})();
+
+// ===================== game state, console, software UI =====================
+(() => {
+  const $ = id => document.getElementById(id);
+  const R = NMR.rng((Date.now() ^ 0x5eed1e) >>> 0);
+  const rr = (a, b) => a + (b - a) * R();
+  const gn = () => NMR.gauss(R);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const wrap180 = d => ((d + 180) % 360 + 360) % 360 - 180;
+  const SF = NMR.SF;
+  const FIELD_PER_PPM = 150;          // field units per ppm of lock offset
+  const SCALE = 5e-5, N_THERMAL = 6.8e-5, N_ADC = 0.002, TIME_SCALE = 0.35;
+  const RG_LIST = Array.from({ length: 67 }, (_, k) => +(Math.pow(2, k / 6)).toPrecision(3));
+  const SOLVENTS = {
+    'D2O': { ppm: 4.79, power: -14 }, 'H2O+D2O': { ppm: 4.79, power: -14 }, 'CDCl3': { ppm: 7.26, power: -20 },
+    'DMSO': { ppm: 2.50, power: -17 }, 'Acetone': { ppm: 2.05, power: -18 }, 'MeOD': { ppm: 3.31, power: -17 },
+    'C6D6': { ppm: 7.16, power: -20 }, 'CD3CN': { ppm: 1.94, power: -17 }
+  };
+  const samp = () => SAMPLES.byId[S.sampleId];
+  const solvPhys = () => SAMPLES.SOLV[samp().solvent];
+
+  // ------------------------------------------------------------------ state
+  let S;
+  function newState() {
+    const opt = {}, shims = {}, rshFile = {};
+    const mess = { Z1: 300, Z2: 250, Z3: 160, Z4: 130, Z5: 90, X: 220, Y: 200, XZ: 150, YZ: 150, XY: 90, X2Y2: 90 };
+    const rshE = { Z1: 32, Z2: 26, Z3: 16, Z4: 12, Z5: 8, X: 26, Y: 24, XZ: 20, YZ: 18, XY: 12, X2Y2: 12 };
+    NMR.SHIMS.forEach(s => {
+      opt[s] = Math.round(rr(-2500, 2500));
+      shims[s] = opt[s] + Math.round(gn() * mess[s]);
+      rshFile[s] = opt[s] + Math.round(gn() * rshE[s]);
+    });
+    const fieldOpt = Math.round(rr(-3000, 3000));
+    const sampleOff = {};
+    const offE = { Z1: 22, Z2: 16, Z3: 5, Z4: 4, Z5: 2, X: 7, Y: 7, XZ: 5, YZ: 5, XY: 3, X2Y2: 3 };
+    SAMPLES.list.forEach(sm => { sampleOff[sm.id] = {}; NMR.SHIMS.forEach(s => sampleOff[sm.id][s] = Math.round(gn() * offE[s])); });
+    return {
+      sampleId: 'caf_d2o', sampleOff, tunedSolv: null, assign: {},
+      opt, shims, rshFile, fieldOpt,
+      fieldTable: fieldOpt + Math.round(gn() * 40),
+      field: fieldOpt + Math.round(gn() * 60), fieldDrift: 0,
+      lockSolv: 'CDCl3', lockPower: -20, lockGain: 92, lockPhase: Math.round(rr(0, 359)),
+      lockPhaseOpt: rr(20, 340), locked: false, sweep: true,
+      refErr: rr(-0.035, 0.035),
+      sample: 'rack', lift: false, spin: false, moving: false,
+      acqu: { PULPROG: 'zg30', NS: 16, DS: 2, TD: 32768, SW: 20.0, O1P: 4.70, D1: 1.0, RG: 2050, SOLVENT: 'CDCl3', P1: 9.8 },
+      proc: { SI: 32768, LB: 0.3, PHC0: Math.round(rr(-180, 180) * 10) / 10, PHC1: Math.round(rr(-30, 30) * 10) / 10, SR: 0 },
+      inst: { th0: rr(-180, 180), th1: rr(-35, 35) },
+      busy: null, haltReq: false,
+      acc: null, data: null, spec: null, emDone: false,
+      view: { mode: 'spec', hi: null, lo: null, y: 1 }, peaks: null, calMode: false,
+      sel: null, fine: false, knobAngle: 0,
+      flags: {}, lvl: 0, hist: new Array(240).fill(0), lockLostAt: 0,
+      fdKey: '', fd: null, H: 0, lwCache: null, lwKey: '',
+      rgaDone: false, hist2: []
+    };
+  }
+  S = newState();
+
+  // ------------------------------------------------------------------ physics helpers
+  const optOf = s => S.opt[s] + (S.sampleOff[S.sampleId] || {})[s];
+  function shimErr() { const e = {}; NMR.SHIMS.forEach(s => e[s] = S.shims[s] - optOf(s)); return e; }
+  function curFD() {
+    const key = NMR.SHIMS.map(s => S.shims[s]).join(',') + (S.spin ? 's' : '') + S.sampleId;
+    if (key !== S.fdKey) { S.fd = NMR.fieldDeltas(shimErr(), S.spin); S.H = NMR.lockHeight(S.fd); S.fdKey = key; }
+    return S.fd;
+  }
+  function curLW() { curFD(); if (S.lwKey !== S.fdKey) { S.lwCache = NMR.lineWidths(S.fd); S.lwKey = S.fdKey; } return S.lwCache; }
+  const fRes = () => S.fieldOpt + (SOLVENTS[S.lockSolv].ppm - solvPhys().ppm) * FIELD_PER_PPM; // field where the sample's 2H resonates
+  function lockCalc() {
+    if (S.sample !== 'probe' || S.moving) return { amp: 0, level: 0, x0: 2, ph: 0, sat: 0, raw: 0 };
+    curFD();
+    const sv = solvPhys();
+    const p = Math.pow(10, S.lockPower / 10), ps = Math.pow(10, sv.ps / 10);
+    const f = 2 * Math.sqrt(p / ps) / (1 + p / ps);
+    const sat = Math.max(0, S.lockPower - (sv.ps + 4));
+    const gainF = Math.pow(10, (S.lockGain - 100) / 20);
+    const ph = wrap180(S.lockPhase - S.lockPhaseOpt);
+    const amp = 0.62 * f * S.H * sv.lockStr * (S.spin ? 0.97 : 1);
+    const x0 = (S.field + S.fieldDrift - fRes()) / 350;
+    const raw = amp * Math.cos(ph * Math.PI / 180);       // lock-loop signal (gain independent)
+    return { amp, gainF, ph, x0, sat, raw, level: 100 * raw * gainF };
+  }
+  function refShift() {
+    const F = S.locked ? fRes() : S.field + S.fieldDrift;
+    return (F - S.fieldOpt) / FIELD_PER_PPM + S.refErr;
+  }
+
+  // ------------------------------------------------------------------ log & status
+  const logEl = $('logwrap');
+  function log(msg, cls = '') {
+    const d = document.createElement('div'); if (cls) d.className = 'log-' + cls; d.textContent = msg;
+    logEl.appendChild(d); while (logEl.childNodes.length > 300) logEl.removeChild(logEl.firstChild);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  function setBusy(name, frac) { S.busy = name; $('busybar').style.width = name ? Math.round((frac || 0) * 100) + '%' : '0'; }
+  function status() {
+    const L = lockCalc();
+    const smp = { rack: 'in rack', air: 'on air cushion', probe: 'in probe' }[S.sample] + (S.moving ? ' (moving)' : '');
+    $('statusbar').innerHTML =
+      `<span>Lock: <b>${S.locked ? 'ON (' + S.lockSolv + ')' : 'off'}</b></span><span>Level: <b>${S.locked ? S.lvl.toFixed(0) + '%' : '—'}</b></span>` +
+      `<span>Sample: <b>${smp}</b></span><span>Spin: <b>${S.spin ? '20 Hz' : 'off'}</b></span>` +
+      `<span>PULPROG <b>${S.acqu.PULPROG}</b> NS <b>${S.acqu.NS}</b> RG <b>${S.acqu.RG}</b></span><span>${S.busy ? '<b style="color:#ffd36b">' + S.busy + '</b>' : 'idle'}</span>`;
+    $('airTxt').textContent = S.lift ? 'ON' : 'OFF';
+    $('sampleSel').disabled = S.sample !== 'rack';
+    $('smpTxt').textContent = smp;
+  }
+
+  // ------------------------------------------------------------------ modals
+  function modal(title, html, buttons = ['OK']) {
+    return new Promise(res => {
+      const bg = document.createElement('div'); bg.className = 'modal-bg';
+      bg.innerHTML = `<div class="modal"><div class="mh">${title}</div><div class="mb">${html}</div><div class="mf"></div></div>`;
+      const mf = bg.querySelector('.mf');
+      buttons.forEach((b, i) => {
+        const btn = document.createElement('button'); btn.textContent = b;
+        btn.onclick = () => { const inp = bg.querySelector('input,select'); document.body.removeChild(bg); res({ button: b, index: i, value: inp ? inp.value : null }); $('cmd').focus(); };
+        mf.appendChild(btn);
+      });
+      document.body.appendChild(bg);
+      const inp = bg.querySelector('input,select'); if (inp) { setTimeout(() => { inp.focus(); if (inp.select) inp.select(); }, 60); if (inp.select) inp.select(); inp.onkeydown = e => { if (e.key === 'Enter') mf.lastChild.click(); }; }
+      else setTimeout(() => mf.lastChild.focus(), 60);
+    });
+  }
+
+  // ------------------------------------------------------------------ console
+  const PARAMS = {
+    FIELD: { name: 'FIELD', get: () => S.field, set: v => S.field = clamp(Math.round(v), -32767, 32767), c: 10, f: 1, fmt: v => (v >= 0 ? '+' : '') + v },
+    LPHASE: { name: 'LOCK PHASE', get: () => S.lockPhase, set: v => S.lockPhase = Math.round(((v % 360) + 360) % 360 * 10) / 10, c: 2, f: 0.2, fmt: v => v.toFixed(1) + '°' },
+    LGAIN: { name: 'LOCK GAIN', get: () => S.lockGain, set: v => S.lockGain = Math.round(clamp(v, 0, 130) * 10) / 10, c: 1, f: 0.1, fmt: v => v.toFixed(1) + 'dB' },
+    LPOWER: { name: 'LOCK POWER', get: () => S.lockPower, set: v => S.lockPower = Math.round(clamp(v, -60, 0) * 10) / 10, c: 1, f: 0.1, fmt: v => v.toFixed(1) + 'dB' }
+  };
+  NMR.SHIMS.forEach(s => PARAMS[s] = {
+    name: s.replace('2', '²').replace('3', '³').replace('4', '⁴').replace('5', '⁵').replace('Z1', 'Z').replace('X²Y²', 'X²-Y²'),
+    get: () => S.shims[s], set: v => S.shims[s] = clamp(Math.round(v), -32767, 32767), c: 10, f: 1, fmt: v => (v >= 0 ? '+' : '') + v
+  });
+  function selectParam(k) {
+    S.sel = k;
+    document.querySelectorAll('[data-sel]').forEach(b => b.classList.toggle('sel', b.dataset.sel === k));
+    document.querySelectorAll('[data-sel]').forEach(b => b.classList.toggle('on', b.dataset.sel === k));
+    updateLED();
+  }
+  function stepParam(n) {
+    if (!S.sel) { flashLED('SELECT'); return; }
+    if (S.sel === 'FIELD' && S.locked) { flashLED('LOCKED'); log('Field cannot be changed while locked.', 'warn'); return; }
+    const P = PARAMS[S.sel];
+    P.set(P.get() + n * (S.fine ? P.f : P.c));
+    SFX.tick(); updateLED();
+  }
+  let flashT = 0;
+  function flashLED(t) { $('ledVal').textContent = t; flashT = performance.now() + 700; }
+  function updateLED() {
+    if (performance.now() < flashT) return;
+    if (!S.sel) { $('ledName').textContent = 'STD BY'; $('ledVal').textContent = ''; }
+    else { const P = PARAMS[S.sel]; $('ledName').textContent = P.name; $('ledVal').textContent = P.fmt(P.get()); }
+    $('ledStep').textContent = S.fine ? 'STEP FINE' : 'STEP COARSE';
+    $('ledState').textContent = S.locked ? 'LOCKED ' + S.lockSolv : (S.sweep ? 'SWEEP' : 'LOCK OFF');
+    const lv = S.locked ? S.lvl : 0;
+    $('ledBarFill').style.width = clamp(lv, 0, 100) + '%'; $('ledLvl').textContent = Math.round(lv) + '%';
+    $('bLock').classList.toggle('on', S.locked); $('bSweep').classList.toggle('on', S.sweep && !S.locked);
+    $('bLift').classList.toggle('on', S.lift); $('bSpin').classList.toggle('on', S.spin);
+    $('bSpinRate').classList.toggle('on', S.spin); $('bFine').classList.toggle('on', S.fine);
+  }
+  // knob
+  (() => {
+    const knob = $('knob'); let drag = null, acc = 0;
+    knob.addEventListener('mousedown', e => {
+      const r = knob.getBoundingClientRect(); drag = { cx: r.left + r.width / 2, cy: r.top + r.height / 2, a: Math.atan2(e.clientY - r.top - r.height / 2, e.clientX - r.left - r.width / 2) };
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', e => {
+      if (!drag) return;
+      const a = Math.atan2(e.clientY - drag.cy, e.clientX - drag.cx);
+      let d = (a - drag.a) * 180 / Math.PI; if (d > 180) d -= 360; if (d < -180) d += 360;
+      drag.a = a; acc += d; S.knobAngle += d; $('knobMark').style.transform = `rotate(${S.knobAngle}deg)`;
+      while (acc >= 12) { stepParam(1); acc -= 12; } while (acc <= -12) { stepParam(-1); acc += 12; }
+    });
+    window.addEventListener('mouseup', () => drag = null);
+    knob.addEventListener('wheel', e => {
+      e.preventDefault(); const n = e.deltaY < 0 ? 1 : -1; S.knobAngle += n * 12;
+      $('knobMark').style.transform = `rotate(${S.knobAngle}deg)`; stepParam(n);
+    }, { passive: false });
+    const rep = (btn, n) => {
+      let t1, t2;
+      const stop = () => { clearTimeout(t1); clearInterval(t2); };
+      btn.addEventListener('mousedown', () => { stepParam(n); t1 = setTimeout(() => t2 = setInterval(() => stepParam(n), 70), 350); });
+      btn.addEventListener('mouseup', stop); btn.addEventListener('mouseleave', stop);
+    };
+    rep($('kMinus'), -1); rep($('kPlus'), 1);
+  })();
+  document.querySelectorAll('[data-sel]').forEach(b => b.addEventListener('click', () => { SFX.click(); selectParam(b.dataset.sel); }));
+  $('bFine').onclick = () => { SFX.click(); S.fine = !S.fine; updateLED(); };
+  $('bStby').onclick = () => { SFX.click(); selectParam(null); };
+  $('bSweep').onclick = () => { SFX.click(); if (S.locked) { log('Sweep is not available while locked.', 'warn'); return; } S.sweep = !S.sweep; updateLED(); };
+  $('bLock').onclick = () => { SFX.click(); S.locked ? lockOff('Lock switched off at console.') : manualLock(); };
+  $('bLift').onclick = () => { SFX.click(); setLift(!S.lift); };
+  $('bSpin').onclick = () => { SFX.click(); toggleSpin(); };
+  $('bSpinRate').onclick = () => { SFX.click(); log('Spin rate fixed at 20 Hz in this simulator.'); };
+  $('bSnd').onclick = () => { SFX.init(); SFX.setEnabled(!SFX.enabled); $('bSnd').classList.toggle('on', SFX.enabled); };
+  $('vol').oninput = e => SFX.setVolume(+e.target.value);
+
+  function manualLock() {
+    if (S.busy === 'lock') return;
+    const L = lockCalc();
+    if (S.sample !== 'probe' || S.moving) { log('LOCK: no lock signal (no sample in the probe).', 'err'); SFX.alarm(); return; }
+    if (Math.abs(L.x0) > 0.12 || L.amp * L.gainF < 0.06 || Math.cos(L.ph * Math.PI / 180) < 0.3) {
+      log('LOCK: lock failed — centre the resonance with FIELD, then check lock phase and gain.', 'err'); SFX.alarm(); return;
+    }
+    S.locked = true; S.sweep = false; S.field = Math.round(fRes()); S.fieldDrift = 0; S.lvl = lockCalc().level; S.hist.fill(S.lvl);
+    log(`LOCK: locked (lock frequency set for ${S.lockSolv}).`, 'ok'); SFX.beep(); updateLED();
+  }
+  function lockOff(msg, alarm) {
+    if (!S.locked) return;
+    S.locked = false; S.sweep = true; S.lvl = 0;
+    log(msg, alarm ? 'err' : ''); if (alarm) SFX.alarm(); updateLED();
+  }
+
+  // ------------------------------------------------------------------ sample handling
+  async function setLift(on) {
+    if (S.moving) { log('Wait — sample is moving.', 'warn'); return; }
+    S.lift = on; SFX.lift(on); updateLED();
+    if (on) {
+      log('Lift air ON.');
+      if (S.sample === 'probe') {
+        if (S.spin) { S.spin = false; }
+        lockOff('Lock lost: sample ejected.', false);
+        S.moving = true; animateSample('air', 1400); await sleep(1400); S.moving = false; S.sample = 'air';
+        log('Sample is floating on the air cushion at the top of the bore.');
+      }
+    } else {
+      log('Lift air OFF.');
+      if (S.sample === 'air') {
+        S.moving = true; animateSample('probe', 2600); await sleep(2600); S.moving = false; S.sample = 'probe'; SFX.thunk();
+        log(`Sample inserted into the probe: ${samp().name}.`, 'ok'); S.flags.inserted = true;
+        if (S.lastInserted !== S.sampleId) { S.lastInserted = S.sampleId; S.flags.lopt = false; S.flags.shim = false; S.rgaDone = false; }
+      }
+    }
+    status();
+  }
+  function toggleSpin() {
+    if (S.sample !== 'probe' || S.moving) { log('SPIN: no sample in the probe.', 'warn'); return; }
+    S.spin = !S.spin; log(S.spin ? 'Spinning ON (20 Hz). Off-axis shims are partially averaged.' : 'Spinning OFF.'); updateLED();
+  }
+  $('tubeRack').onclick = async () => {
+    SFX.init(); SFX.click();
+    if (S.moving) return;
+    if (S.sample === 'rack') {
+      if (!S.lift) {
+        await modal('Careful!', 'The lift air is <b>off</b>. Dropping the tube into the bore without the air cushion can break it on the probe.<br><br>Turn the air on first: type <code>ej</code> or press <b>LIFT ON/OFF</b>.');
+        return;
+      }
+      S.sampleId = $('sampleSel').value; updateSampleInfo();
+      S.sample = 'air'; animateSample('air', 0); log(`${samp().name} placed on the air cushion. Type ij (or press LIFT) to lower it into the probe.`);
+    } else if (S.sample === 'air') {
+      S.sample = 'rack'; animateSample('rack', 0); log('Sample returned to the rack.');
+    } else log('The sample is in the probe — eject it first (ej).', 'warn');
+    status();
+  };
+
+  // magnet drawing
+  const svg = $('magnetSvg');
+  svg.innerHTML = `
+    <defs><linearGradient id="dew" x1="0" x2="1"><stop offset="0" stop-color="#8e979f"/><stop offset=".5" stop-color="#d7dde2"/><stop offset="1" stop-color="#8e979f"/></linearGradient></defs>
+    <rect x="25" y="40" width="140" height="120" rx="14" fill="url(#dew)" stroke="#222"/>
+    <rect x="40" y="30" width="16" height="14" fill="#9aa" stroke="#222"/><rect x="134" y="30" width="16" height="14" fill="#9aa" stroke="#222"/>
+    <rect x="18" y="160" width="10" height="34" fill="#666"/><rect x="162" y="160" width="10" height="34" fill="#666"/>
+    <rect x="88" y="8" width="14" height="186" fill="#16191c" stroke="#000"/>
+    <rect x="84" y="2" width="22" height="8" fill="#444" stroke="#000"/>
+    <rect x="86" y="130" width="18" height="64" fill="#5d4c35" stroke="#000"/>
+    <rect x="89" y="88" width="12" height="22" fill="none" stroke="#c98a3a" stroke-width="1.5" stroke-dasharray="2 2"/>
+    <text x="95" y="198" font-size="7" fill="#ccc" text-anchor="middle">probe</text>
+    <text x="38" y="102" font-size="8" fill="#333">B₀</text>
+    <g id="svgTube" style="transition:transform 1s ease-in-out"><rect x="92" y="0" width="6" height="56" rx="3" fill="#e6f2ff" stroke="#9cc"/><rect x="92" y="32" width="6" height="22" fill="#9fd3ff"/><rect x="90" y="-6" width="10" height="8" fill="#d33"/></g>
+    <g id="airJets" opacity="0"><path d="M90 6 l-6 -6 M100 6 l6 -6 M95 4 v-4" stroke="#7cf" stroke-width="1.2"/></g>`;
+  function animateSample(where, ms) {
+    const g = $('svgTube');
+    g.style.transition = ms ? `transform ${ms / 1000}s ease-in-out, opacity .3s` : 'none';
+    if (where === 'rack') { g.style.opacity = 0; g.style.transform = 'translate(0px,-70px)'; }
+    else { g.style.opacity = 1; g.style.transform = where === 'air' ? 'translate(0px,-14px)' : 'translate(0px,58px)'; }
+    $('rackTube').style.opacity = where === 'rack' ? 1 : 0.15;
+  }
+  animateSample('rack', 0);
+  const CAPC = { D2O: '#3a8ee6', CDCl3: '#d33', DMSO: '#e0a020' };
+  $('sampleSel').innerHTML = SAMPLES.list.map(sm => `<option value="${sm.id}">${sm.name}</option>`).join('');
+  $('sampleSel').onchange = () => { $('rackCap').setAttribute('fill', CAPC[SAMPLES.byId[$('sampleSel').value].solvent]); };
+  $('sampleSel').onchange();
+  function updateSampleInfo() {
+    const sm = samp(), sv = SAMPLES.SOLV[sm.solvent];
+    $('dsName').textContent = sm.short; $('treeName').textContent = sm.short;
+    $('titleBody').innerHTML = `<b>Sample:</b> ${sm.mol}, ${sm.conc} mM in ${sv.name}<br><b>Reference:</b> ${sm.ref}${sm.ref === 'DSS' ? ', 0.5 mM' : ', 0.5 mM'} (δ = 0.000 ppm)<br><b>Tube:</b> 5 mm, 600 µL<br><b>Probe:</b> 5 mm inverse broadband, z-gradient<br><b>Temperature:</b> 298 K<br><br>` +
+      `Goal: lock on ${sv.name}, shim, record a 1D <sup>1</sup>H spectrum with the ${sm.ref} singlet referenced to 0 ppm, then assign the signals (Assign tab).`;
+  }
+
+  // ------------------------------------------------------------------ lock display
+  const lc = $('lockCanvas'), lx = lc.getContext('2d');
+  function drawLock(t) {
+    const W = lc.width, Hh = lc.height;
+    lx.fillStyle = '#000'; lx.fillRect(0, 0, W, Hh);
+    lx.strokeStyle = '#0c2a12'; lx.lineWidth = 1;
+    for (let i = 1; i < 10; i++) { lx.beginPath(); lx.moveTo(i * W / 10, 0); lx.lineTo(i * W / 10, Hh); lx.stroke(); }
+    for (let i = 1; i < 8; i++) { lx.beginPath(); lx.moveTo(0, i * Hh / 8); lx.lineTo(W, i * Hh / 8); lx.stroke(); }
+    const L = lockCalc();
+    lx.font = '11px Consolas,monospace';
+    if (S.locked) {
+      lx.strokeStyle = '#ffe14d'; lx.lineWidth = 1.6; lx.beginPath();
+      const n = S.hist.length;
+      for (let i = 0; i < n; i++) { const y = Hh - 10 - clamp(S.hist[i], -5, 103) / 100 * (Hh - 20); const x = i * W / (n - 1); i ? lx.lineTo(x, y) : lx.moveTo(x, y); }
+      lx.stroke();
+      lx.fillStyle = '#5cff86'; lx.fillText('LOCKED  ' + S.lockSolv, 8, 14);
+      if (S.lvl > 100) { lx.fillStyle = '#ff6060'; lx.fillText('LEVEL OFF SCALE — reduce gain', W - 210, 14); }
+      if (L.sat > 1) { lx.fillStyle = '#ffa040'; lx.fillText('saturation? (lock power high)', W - 210, 28); }
+      $('lockMode').textContent = 'LOCK'; $('lockLvlTxt').textContent = 'Level: ' + S.lvl.toFixed(1) + '%';
+    } else {
+      const mid = Hh / 2;
+      lx.strokeStyle = '#3d7a4a'; lx.beginPath(); lx.moveTo(0, mid); lx.lineTo(W, mid); lx.stroke();
+      lx.strokeStyle = '#5cff86'; lx.lineWidth = 1.4; lx.beginPath();
+      const A = S.sweep ? (L.amp || 0) * (L.gainF || 0) : 0;
+      const phr = (L.ph || 0) * Math.PI / 180, w = 0.03 / Math.pow(Math.max(S.H, 0.05), 0.8);
+      for (let px = 0; px < W; px++) {
+        const x = px / W * 2 - 1, u = x - L.x0;
+        const ab = w * w / (w * w + u * u), di = w * u / (w * w + u * u);
+        let y = A * (Math.cos(phr) * ab + Math.sin(phr) * di);
+        if (u > 0) y += A * 0.45 * Math.exp(-u / 0.22) * Math.sin(2 * Math.PI * 30 * u * u + phr + 1.2);
+        y += (Math.random() - 0.5) * 0.02;
+        const yy = mid - clamp(y, -1.2, 1.2) * (Hh * 0.42);
+        px ? lx.lineTo(px, yy) : lx.moveTo(px, yy);
+      }
+      lx.stroke();
+      lx.strokeStyle = '#255'; lx.setLineDash([4, 4]); lx.beginPath(); lx.moveTo(W / 2, 0); lx.lineTo(W / 2, Hh); lx.stroke(); lx.setLineDash([]);
+      lx.fillStyle = '#5cff86'; lx.fillText(S.sweep ? 'SWEEP  (lock off)' : 'LOCK OFF', 8, 14);
+      lx.fillText(`FIELD ${S.field}   LOCK FREQ: ${S.lockSolv}`, 8, Hh - 8);
+      $('lockMode').textContent = S.sweep ? 'SWEEP' : 'OFF'; $('lockLvlTxt').textContent = 'Level: —';
+    }
+  }
+  // drag floating windows
+  document.querySelectorAll('.fwin .fh').forEach(h => {
+    const win = h.parentElement; let d = null;
+    h.addEventListener('mousedown', e => { if (e.target.closest('.x')) return; const L0 = win.offsetLeft, T0 = win.offsetTop; win.style.right = 'auto'; win.style.left = L0 + 'px'; win.style.top = T0 + 'px'; d = { x: e.clientX - win.offsetLeft, y: e.clientY - win.offsetTop }; e.preventDefault(); });
+    window.addEventListener('mousemove', e => { if (d) { win.style.left = (e.clientX - d.x) + 'px'; win.style.top = (e.clientY - d.y) + 'px'; } });
+    window.addEventListener('mouseup', () => d = null);
+  });
+  document.querySelectorAll('[data-close]').forEach(x => x.onclick = () => $(x.dataset.close).style.display = 'none');
+
+  // ------------------------------------------------------------------ main loop
+  let lastT = performance.now(), lastSlow = 0;
+  function frame(t) {
+    const dt = Math.min(0.1, (t - lastT) / 1000); lastT = t;
+    const L = lockCalc();
+    if (!S.locked) S.fieldDrift += (gn() * 0.15 - S.fieldDrift * 0.002) * dt * 10;
+    if (S.locked) {
+      let target = L.level;
+      const wob = L.sat > 0 ? L.sat * 0.9 * Math.sin(t / 380) + L.sat * 0.5 * Math.sin(t / 97) : 0;
+      if (L.sat > 0) target *= 1 - Math.min(0.5, L.sat * 0.04);
+      S.lvl += (target - S.lvl) * Math.min(1, dt * 6);
+      const shown = S.lvl + wob + gn() * 0.35 + (S.spin ? 0.6 * Math.sin(t / 50) : 0);
+      S.hist.push(shown); S.hist.shift();
+      if (L.raw < 0.025 || Math.abs(L.ph) > 78) lockOff('LOCK LOST! Lock signal too weak or wrong lock phase.', true);
+    }
+    if ($('lockWin').style.display !== 'none') drawLock(t);
+    if (t - lastSlow > 400) { lastSlow = t; updateLED(); status(); checkObjectives(); }
+    if (S.needDraw) { S.needDraw = false; drawSpec(); }
+    requestAnimationFrame(frame);
+  }
+
+  // ------------------------------------------------------------------ objectives
+  const OBJ = [
+    ['ins', 'Insert a sample', 'Pick a tube in the rack (right). Type ej (air on), click the tube, then ij.'],
+    ['rsh', 'Load a standard shim set', 'Type rsh — the previous user left the shims a mess.'],
+    ['lock', 'Lock on the sample solvent', 'Type lock and choose the solvent of your sample (or lock -noauto + FIELD + LOCK ON).'],
+    ['lopt', 'Optimise the lock', 'Adjust LOCK PHASE for max level; keep level 40–90 % with LOCK GAIN; avoid saturation.'],
+    ['shim', 'Shim (reference line < 0.8 Hz)', 'Run topshim (Z shims), then tweak X, Y, XZ, YZ on the knob for max lock level.'],
+    ['tune', 'Tune & match the probe', 'Type atma (needed again after changing solvent).'],
+    ['rga', 'Set the receiver gain', 'Type rga (the old RG of 2050 will overflow the ADC).'],
+    ['acq', 'Acquire the spectrum', 'Check eda (NS, D1, PULPROG), then zg. Short D1 with zg (90°) saturates slow-relaxing protons.'],
+    ['proc', 'Process: FT, phase, baseline', 'efp, then apk (or .ph), then abs.'],
+    ['ref', 'Reference DSS / TMS to 0.000 ppm', 'Type .cal, click the reference singlet near 0 ppm, enter 0.'],
+    ['asg', 'Assign the spectrum', 'Open the Assign tab, label every signal, press Check.']
+  ];
+  const objEl = $('objectives');
+  objEl.innerHTML = OBJ.map(([id, t, h]) => `<div class="obj" id="o_${id}"><div class="box">✓</div><div><div class="t">${t}</div><div class="h">${h}</div></div></div>`).join('');
+  function objState() {
+    const L = lockCalc(), o = {};
+    o.ins = !!S.flags.inserted;
+    o.rsh = !!S.flags.rsh;
+    o.lock = S.locked && S.sample === 'probe' && SOLVENTS[S.lockSolv].ppm === solvPhys().ppm;
+    o.lopt = S.locked && Math.abs(L.ph) < 10 && S.lvl > 40 && S.lvl < 90 && L.sat <= 0;
+    if (o.lopt) S.flags.lopt = true; o.lopt = o.lopt || !!S.flags.lopt;
+    o.shim = S.sample === 'probe' && curLW().w50 < 0.8; if (o.shim) S.flags.shim = true; o.shim = o.shim || (!!S.flags.shim && !!S.data);
+    o.tune = S.sample === 'probe' && tuneFactor() === 1;
+    o.rga = S.rgaDone;
+    o.acq = !!S.data && S.data.complete;
+    o.proc = !!S.spec && S.spec.pk && S.spec.abs && phaseErr() < 6;
+    o.ref = !!S.spec && Math.abs(dssPpm()) < 0.005;
+    o.asg = !!(S.data && S.assign[S.data.sampleId] && S.assign[S.data.sampleId].frac >= 0.8);
+    return o;
+  }
+  function checkObjectives() { const o = objState(); OBJ.forEach(([id]) => $('o_' + id).classList.toggle('done', !!o[id])); }
+
+  // ------------------------------------------------------------------ acquisition
+  function acqGeom() { const N = S.acqu.TD / 2, swh = S.acqu.SW * SF; return { N, swh, aq: N / swh }; }
+  const flipRad = () => (S.acqu.PULPROG === 'zg30' ? 30 : 90) * Math.PI / 180;
+  const tuneFactor = () => (S.sample === 'probe' && S.tunedSolv === samp().solvent) ? 1 : 0.55;
+  const lineCache = {};
+  function signalGroups(N, swh, driftHz = 0) {
+    if (S.sample !== 'probe') return [];
+    const lines = lineCache[S.sampleId] || (lineCache[S.sampleId] = NMR.linesFor(SAMPLES.signals(samp())));
+    return NMR.synthGroups({ N, swh, o1p: S.acqu.O1P, refShift: refShift() + driftHz / SF, fd: curFD(), lines, presat: S.acqu.PULPROG === 'zgpr' });
+  }
+  // one scan's FID: each T1 group weighted by its current longitudinal magnetisation
+  function combine(groups, mz, N) {
+    const re = new Float64Array(N), im = new Float64Array(N);
+    const k0 = S.acqu.RG * SCALE * tuneFactor() * Math.sin(flipRad());
+    for (const g of groups) {
+      const k = k0 * (mz ? mz.get(g.t1) : 1);
+      for (let i = 0; i < N; i++) { re[i] += k * g.re[i]; im[i] += k * g.im[i]; }
+    }
+    return { re, im };
+  }
+  function needSample(cmd) {
+    if (S.sample !== 'probe' || S.moving) { log(`${cmd}: no sample in the probe.`, 'err'); SFX.beep(); return false; }
+    return true;
+  }
+  function notBusy(cmd) { if (S.busy) { log(`${cmd}: please wait, "${S.busy}" is running.`, 'err'); return false; } return true; }
+
+  async function cmdLock(arg) {
+    if (!notBusy('lock') || !needSample('lock')) return;
+    const noauto = /-noauto/i.test(arg || '');
+    let solv = (arg || '').replace(/-noauto/i, '').trim();
+    if (!solv) {
+      const opts = Object.keys(SOLVENTS).map(s => `<option ${s === S.acqu.SOLVENT ? 'selected' : ''}>${s}</option>`).join('');
+      const r = await modal('Lock: select solvent', `Solvent:<br><select size="8">${opts}</select>`, ['Cancel', 'OK']);
+      if (r.button !== 'OK') return; solv = r.value;
+    }
+    const key = Object.keys(SOLVENTS).find(k => k.toLowerCase() === String(solv).toLowerCase());
+    if (!key) { log(`lock: unknown solvent "${solv}". Choices: ${Object.keys(SOLVENTS).join(', ')}`, 'err'); return; }
+    if (S.locked) lockOff('lock: releasing current lock.');
+    if (noauto) {
+      S.lockSolv = key; S.acqu.SOLVENT = key; S.sweep = true; S.lockPower = SOLVENTS[key].power; S.field = S.fieldTable;
+      $('lockWin').style.display = '';
+      log(`lock: lock frequency and power set for ${key}, field = ${S.field}. Find the signal with FIELD, adjust LOCK PHASE/GAIN, then press LOCK ON/OFF.`, 'ok');
+      return;
+    }
+    setBusy('lock', 0.05);
+    S.lockSolv = key; S.acqu.SOLVENT = key; S.sweep = true;
+    S.lockPower = SOLVENTS[key].power;
+    log(`lock: solvent ${key}, lock power ${S.lockPower.toFixed(1)} dB, setting field to table value ${S.fieldTable}...`);
+    $('lockWin').style.display = '';
+    const start = S.field;
+    for (let i = 1; i <= 10; i++) { S.field = Math.round(start + (S.fieldTable - start) * i / 10); setBusy('lock', i * 0.03); await sleep(80); }
+    // set a reasonable display gain during the search
+    S.lockGain = 105;
+    log('lock: searching for lock signal...');
+    const target = fRes(), found = Math.abs(target - S.fieldTable) <= 250;
+    const from = S.field, to = found ? target : S.fieldTable + 260;
+    for (let i = 1; i <= 25; i++) { S.field = Math.round(from + (to - from) * i / 25 + (found ? 0 : Math.sin(i) * 200)); setBusy('lock', 0.3 + i * 0.024); await sleep(90); }
+    if (!found || S.sample !== 'probe') { S.field = S.fieldTable; setBusy(null); log('lock: no lock signal found! Check the solvent and the sample.', 'err'); SFX.alarm(); return; }
+    S.lockPhase = Math.round(((S.lockPhaseOpt + gn() * 14 + 18 * (R() < .5 ? -1 : 1)) % 360 + 360) % 360 * 10) / 10;
+    const L = lockCalc();
+    const gF = 0.6 / Math.max(1e-4, L.raw);
+    S.lockGain = Math.round(clamp(100 + 20 * Math.log10(gF), 0, 130) * 10) / 10;
+    S.locked = true; S.sweep = false; S.field = Math.round(target); S.fieldDrift = 0; S.lvl = lockCalc().level; S.hist.fill(S.lvl);
+    setBusy(null);
+    log(`lock: locked on ${key}. Lock gain set to ${S.lockGain.toFixed(1)} dB.`, 'ok');
+    if (SOLVENTS[key].ppm !== 4.79) log('lock: note — the lock frequency was set for ' + key + '.', 'warn');
+    SFX.beep(); updateLED();
+  }
+
+  async function cmdTopshim(arg) {
+    if (!notBusy('topshim') || !needSample('topshim')) return;
+    if (arg && /3d/i.test(arg)) { log('topshim: this probe has a z-gradient only — 3D shimming is not available.', 'err'); return; }
+    if (!S.locked) { log('topshim: lock is off — lock first.', 'err'); SFX.beep(); return; }
+    if (S.spin) log('topshim: sample is spinning — shimming non-spinning is recommended. Continuing.', 'warn');
+    setBusy('topshim', 0.02);
+    log('TopShim: 1D gradient shimming on 2H (' + S.lockSolv + '), shims Z1–Z5 ...');
+    const Z = ['Z1', 'Z2', 'Z3', 'Z4', 'Z5'];
+    const stdAx = () => { const e = {}; Z.forEach(s => e[s] = S.shims[s] - optOf(s)); const fd = NMR.fieldDeltas(e, false); let v = 0; for (let i = 0; i < fd.d.length; i++) v += NMR.VOX.w[i] * fd.d[i] * fd.d[i]; return Math.sqrt(v / NMR.VOX.wsum); };
+    log(`TopShim: initial B0 standard deviation = ${stdAx().toFixed(2)} Hz`);
+    for (let it = 1; it <= 5; it++) {
+      for (let k = 0; k < 6; k++) { SFX.relay(); await sleep(260); setBusy('topshim', (it - 1) / 5 + k / 30); if (S.sample !== 'probe') break; }
+      if (S.sample !== 'probe' || !S.locked) { setBusy(null); log('TopShim: aborted (lock/sample lost).', 'err'); return; }
+      Z.forEach(s => { const e = S.shims[s] - optOf(s); S.shims[s] = Math.round(optOf(s) + e * (it < 5 ? 0.3 : 0) + gn() * (it < 5 ? 2 : 1.2)); });
+      log(`TopShim: iteration ${it}: B0 std dev = ${stdAx().toFixed(2)} Hz`);
+    }
+    setBusy(null);
+    log(`TopShim completed: B0 standard deviation = ${stdAx().toFixed(2)} Hz. (Off-axis shims were not changed.)`, 'ok');
+    S.flags.topshim = true; SFX.beep(); updateLED();
+  }
+
+  async function cmdAtma() {
+    if (!notBusy('atma') || !needSample('atma')) return;
+    setBusy('atma', 0.01); log('atma: automatic tuning and matching, 1H channel ...'); SFX.motor(7);
+    const steps = ['tuning (coarse)', 'matching (coarse)', 'tuning (fine)', 'matching (fine)'];
+    for (let i = 0; i < steps.length; i++) { log('atma: ' + steps[i] + ' ...'); for (let k = 0; k < 9; k++) { await sleep(190); setBusy('atma', (i * 9 + k) / 36); } }
+    S.tunedSolv = samp().solvent; setBusy(null);
+    log('atma: done. Reflection minimum at 500.130 MHz, matched.', 'ok'); SFX.beep();
+  }
+
+  async function cmdRga() {
+    if (!notBusy('rga') || !needSample('rga')) return;
+    setBusy('rga', 0.01); log('rga: automatic receiver gain adjustment ...');
+    const { N, swh } = acqGeom();
+    let rg = RG_LIST[RG_LIST.length - 1];
+    const old = S.acqu.RG;
+    for (let k = 0; k < 6; k++) { SFX.relay(); await sleep(450); setBusy('rga', k / 6); }
+    S.acqu.RG = 1; const f = combine(signalGroups(Math.min(N, 64), swh), null, Math.min(N, 64)); S.acqu.RG = old;
+    let mx = 0; for (let i = 0; i < f.re.length; i++) mx = Math.max(mx, Math.abs(f.re[i]), Math.abs(f.im[i]));
+    const ideal = 0.7 / Math.max(mx, 1e-9);
+    rg = RG_LIST.filter(v => v <= ideal).pop() || RG_LIST[0];
+    S.acqu.RG = rg; S.rgaDone = true; setBusy(null); renderPars();
+    log(`rga: RG = ${rg}`, 'ok'); SFX.beep();
+  }
+
+  async function cmdZg() {
+    if (!notBusy('zg')) return;
+    if (S.data) {
+      const r = await modal('zg', 'Data set exists. Overwrite?', ['Cancel', 'Overwrite']);
+      if (r.button !== 'Overwrite') return;
+    }
+    if (S.sample !== 'probe') log('zg: warning — no sample in the probe. Acquiring anyway.', 'warn');
+    if (!S.locked) log('zg: warning — the spectrometer is NOT locked.', 'warn');
+    const { N, swh, aq } = acqGeom();
+    const ns = S.acqu.NS, ds = S.acqu.DS;
+    const acc = { re: new Float64Array(N), im: new Float64Array(N) };
+    S.acc = acc; S.spec = null; S.peaks = null; S.emDone = false;
+    S.data = { complete: false, scans: 0, overflow: false, lockedAll: S.locked, rg: S.acqu.RG, tuned: tuneFactor() === 1, ns, lw: null, pulprog: S.acqu.PULPROG,
+      sampleId: S.sample === 'probe' ? S.sampleId : null, d1: S.acqu.D1 };
+    setBusy('zg', 0); S.haltReq = false; S.view.mode = 'fid'; switchTab('vSpec');
+    log(`zg: started. PULPROG ${S.acqu.PULPROG}, NS ${ns}, DS ${ds}, AQ ${aq.toFixed(2)} s, D1 ${S.acqu.D1} s, RG ${S.acqu.RG}`);
+    let sigKey = '', groups = [], drift = 0;
+    const mz = new Map(), TR = aq + S.acqu.D1, a = flipRad();
+    const scanMs = TR * 1000 * TIME_SCALE;
+    for (let sc = -ds; sc < ns; sc++) {
+      if (S.haltReq) break;
+      if (!S.locked) { drift += gn() * 0.35 + 0.05; S.data.lockedAll = false; }
+      curFD();
+      const key = S.fdKey + '|' + S.locked + '|' + S.sample + '|' + S.lockSolv + (S.locked ? '' : '|' + drift.toFixed(2) + S.fieldDrift.toFixed(1));
+      if (key !== sigKey) { groups = signalGroups(N, swh, S.locked ? 0 : drift); sigKey = key; }
+      groups.forEach(g => { if (!mz.has(g.t1)) mz.set(g.t1, 1); });
+      const sig = combine(groups, mz, N);
+      // relaxation until the next pulse: Mz -> Mz cos(a), then recovers with T1 over TR
+      for (const [t1, m] of mz) mz.set(t1, 1 - (1 - m * Math.cos(a)) * Math.exp(-TR / t1));
+      SFX.relay();
+      await sleep(scanMs);
+      const sgm = Math.sqrt(Math.pow(S.acqu.RG * N_THERMAL, 2) + N_ADC * N_ADC);
+      if (sc >= 0) {
+        let over = false;
+        for (let i = 0; i < N; i++) {
+          let a = sig.re[i] + gn() * sgm, b = sig.im[i] + gn() * sgm;
+          if (a > 1) { a = 1; over = true; } else if (a < -1) { a = -1; over = true; }
+          if (b > 1) { b = 1; over = true; } else if (b < -1) { b = -1; over = true; }
+          acc.re[i] += a; acc.im[i] += b;
+        }
+        if (over && !S.data.overflow) { S.data.overflow = true; log('ADC OVERFLOW — the receiver gain is too high! (run rga)', 'err'); SFX.alarm(); }
+        S.data.scans = sc + 1;
+      }
+      setBusy(sc < 0 ? `zg: dummy scan ${sc + ds + 1}/${ds}` : `zg: scan ${sc + 1}/${ns}`, (sc + ds + 1) / (ns + ds));
+      S.needDraw = true;
+    }
+    S.data.complete = S.data.scans === ns; S.data.ref = refShift();
+    S.data.lw = S.sample === 'probe' ? NMR.lineWidths(curFD()) : null;
+    if (!S.data.lockedAll && S.data.lw) { const extra = 0.4 * Math.sqrt(Math.max(1, S.data.scans)); S.data.lw = { w50: S.data.lw.w50 + extra, w055: S.data.lw.w055 + extra * 4, w011: S.data.lw.w011 + extra * 6 }; }
+    setBusy(null);
+    log(S.haltReq ? `zg: halted after ${S.data.scans} scans.` : `zg: acquisition finished (${ns} scans).`, 'ok');
+    SFX.chime(); S.needDraw = true;
+  }
+
+  // ------------------------------------------------------------------ processing
+  function needFID(c) { if (!S.acc || !S.data || !S.data.scans) { log(`${c}: no FID — acquire data first (zg).`, 'err'); return false; } return true; }
+  function doFT() {
+    const { swh } = acqGeom();
+    if (S.proc.SI < S.acqu.TD / 2) { S.proc.SI = S.acqu.TD / 2; log('ft: SI increased to ' + S.proc.SI, 'warn'); }
+    const sp = NMR.transform(S.acc.re, S.acc.im, S.proc.SI, S.emDone ? S.proc.LB : 0, swh);
+    const SI = S.proc.SI, d2r = Math.PI / 180;
+    for (let k = 0; k < SI; k++) {
+      const ph = -(S.inst.th0 + S.inst.th1 * k / SI) * d2r, c = Math.cos(ph), s = Math.sin(ph);
+      const a = sp.re[k] * c - sp.im[k] * s, b = sp.re[k] * s + sp.im[k] * c; sp.re[k] = a; sp.im[k] = b;
+    }
+    let mx = 0; for (let k = 0; k < SI; k++) mx = Math.max(mx, Math.hypot(sp.re[k], sp.im[k]));
+    S.spec = { re: sp.re, im: sp.im, SI, swh, o1p: S.acqu.O1P, max: mx, pk: false, abs: false,
+      base: [gn() * 0.006 * mx, gn() * 0.006 * mx, gn() * 0.008 * mx] };
+    S.peaks = null; S.view.mode = 'spec';
+    if (S.view.hi === null) fullView();
+  }
+  const ppmOf = k => S.spec.o1p + (k - S.spec.SI / 2) * S.spec.swh / S.spec.SI / SF - S.proc.SR;
+  const kOf = ppm => (ppm + S.proc.SR - S.spec.o1p) * SF * S.spec.SI / S.spec.swh + S.spec.SI / 2;
+  function phased(k) {
+    const sp = S.spec; let p0 = 0, p1 = 0;
+    if (sp.pk) { p0 = S.proc.PHC0; p1 = S.proc.PHC1; }
+    const ph = (p0 + p1 * k / sp.SI) * Math.PI / 180;
+    let v = sp.re[k] * Math.cos(ph) - sp.im[k] * Math.sin(ph);
+    if (!sp.abs) { const x = k / sp.SI - 0.5; v += sp.base[0] + sp.base[1] * x + sp.base[2] * (x * x - 0.08); }
+    return v;
+  }
+  function phaseErr() {
+    if (!S.spec || !S.spec.pk) return 999;
+    const e0 = Math.abs(wrap180(S.proc.PHC0 - S.inst.th0)), e1 = Math.abs(S.proc.PHC1 - S.inst.th1);
+    return Math.max(e0, e1 / 2);
+  }
+  function biggestK(a, b) { const lo = Math.min(a, b), hi = Math.max(a, b); let bk = lo, bv = -Infinity; for (let k = Math.max(0, lo); k <= Math.min(S.spec.SI - 1, hi); k++) { const v = Math.hypot(S.spec.re[k], S.spec.im[k]); if (v > bv) { bv = v; bk = k; } } return bk; }
+  function dssPpm() {
+    if (!S.spec) return 99;
+    // the DSS singlet: tallest magnitude within ±0.6 ppm of where it "should" be given referencing
+    const exp0 = (S.data && S.data.ref != null ? S.data.ref : refShift()) - S.proc.SR;
+    const k = biggestK(Math.round(kOf(exp0 + 0.15)), Math.round(kOf(exp0 - 0.15)));
+    return ppmOf(k);
+  }
+  function fullView() { const sw = S.acqu.SW; S.view.hi = S.acqu.O1P + sw / 2 - S.proc.SR; S.view.lo = S.acqu.O1P - sw / 2 - S.proc.SR; S.view.y = 1; }
+
+  // ------------------------------------------------------------------ spectrum drawing
+  const sc = $('specCanvas'), sx = sc.getContext('2d');
+  function resizeSpec() {
+    const r = sc.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    sc.width = Math.max(100, r.width * dpr); sc.height = Math.max(100, r.height * dpr); sx.setTransform(dpr, 0, 0, dpr, 0, 0); drawSpec();
+  }
+  new ResizeObserver(resizeSpec).observe($('vSpec'));
+  let rubber = null, mouseX = null;
+  function niceStep(span, n) { const raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))); for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= raw) return m * p; return 10 * p; }
+  function drawSpec() {
+    const W = sc.clientWidth, H = sc.clientHeight; if (!W) return;
+    sx.fillStyle = '#fff'; sx.fillRect(0, 0, W, H);
+    const PL = 20, PR = 20, PT = 24, PB = 34, pw = W - PL - PR, base = H - PB - 30;
+    sx.font = '11px Segoe UI,Arial'; sx.fillStyle = '#333';
+    $('modeBanner').style.display = S.calMode ? 'block' : 'none';
+    if (S.calMode) $('modeBanner').textContent = 'CALIBRATION: click on the reference peak';
+    if (S.view.mode === 'fid' && S.acc) {
+      const N = S.acc.re.length, { swh } = acqGeom(); let mx = 1e-12;
+      for (let i = 0; i < N; i++) mx = Math.max(mx, Math.abs(S.acc.re[i]));
+      const mid = PT + (H - PT - PB) / 2, sc2 = (H - PT - PB) / 2 * 0.9 / mx;
+      sx.strokeStyle = '#ddd'; sx.beginPath(); sx.moveTo(PL, mid); sx.lineTo(W - PR, mid); sx.stroke();
+      sx.strokeStyle = '#1846b0'; sx.lineWidth = 1; sx.beginPath();
+      for (let px = 0; px < pw; px++) {
+        const i0 = Math.floor(px / pw * N), i1 = Math.max(i0 + 1, Math.floor((px + 1) / pw * N));
+        let a = Infinity, b = -Infinity; for (let i = i0; i < i1; i++) { a = Math.min(a, S.acc.re[i]); b = Math.max(b, S.acc.re[i]); }
+        sx.moveTo(PL + px, mid - a * sc2); sx.lineTo(PL + px, mid - b * sc2 - 0.5);
+      }
+      sx.stroke();
+      sx.fillStyle = '#333'; const aq = N / swh, st = niceStep(aq, 8);
+      for (let t = 0; t <= aq; t += st) { const x = PL + t / aq * pw; sx.fillRect(x, H - PB, 1, 5); sx.fillText(t.toFixed(2), x - 10, H - PB + 17); }
+      sx.fillText('[s]   FID — ' + (S.data ? S.data.scans : 0) + ' scans', W - PR - 140, H - 6);
+      if (S.data && S.data.overflow) { sx.fillStyle = '#c00'; sx.font = 'bold 13px Segoe UI'; sx.fillText('ADC OVERFLOW (clipped FID)', PL + 10, PT + 6); }
+      return;
+    }
+    if (!S.spec) {
+      sx.fillStyle = '#777'; sx.font = '14px Segoe UI'; sx.textAlign = 'center';
+      sx.fillText(S.acc ? 'FID acquired. Process it: efp' : 'No data. Prepare the spectrometer, then acquire with zg.', W / 2, H / 2); sx.textAlign = 'left'; return;
+    }
+    const hi = S.view.hi, lo = S.view.lo;
+    const kA = Math.max(0, Math.floor(kOf(lo))), kB = Math.min(S.spec.SI - 1, Math.ceil(kOf(hi)));
+    const yk = S.spec.max > 0 ? (base - PT) * 0.92 / S.spec.max * S.view.y : 1;
+    const xOf = ppm => PL + (hi - ppm) / (hi - lo) * pw;
+    // axis
+    sx.strokeStyle = '#333'; sx.beginPath(); sx.moveTo(PL, H - PB); sx.lineTo(W - PR, H - PB); sx.stroke();
+    const st = niceStep(hi - lo, 12); sx.fillStyle = '#333';
+    for (let p = Math.ceil(lo / st) * st; p <= hi; p += st) { const x = xOf(p); sx.fillRect(x, H - PB, 1, 5); const t = st < 0.01 ? p.toFixed(3) : st < 0.1 ? p.toFixed(2) : st < 1 ? p.toFixed(1) : p.toFixed(0); sx.fillText(t, x - 8, H - PB + 17); }
+    sx.fillText('ppm', W - PR - 22, H - 6);
+    // trace
+    sx.strokeStyle = '#1846b0'; sx.lineWidth = 1; sx.beginPath();
+    const n = kB - kA + 1;
+    if (n > pw * 2) {
+      for (let px = 0; px < pw; px++) {
+        const ppm0 = hi - px / pw * (hi - lo), ppm1 = hi - (px + 1) / pw * (hi - lo);
+        const k0 = Math.max(0, Math.floor(kOf(ppm1))), k1 = Math.min(S.spec.SI - 1, Math.max(k0, Math.floor(kOf(ppm0))));
+        let a = Infinity, b = -Infinity; for (let k = k0; k <= k1; k++) { const v = phased(k); if (v < a) a = v; if (v > b) b = v; }
+        sx.moveTo(PL + px, base - clamp(a * yk, -base, 4 * H)); sx.lineTo(PL + px, base - clamp(b * yk, -base, 4 * H) - 0.5);
+      }
+    } else {
+      for (let k = kA; k <= kB; k++) { const x = xOf(ppmOf(k)), y = base - clamp(phased(k) * yk, -base, 4 * H); k === kA ? sx.moveTo(x, y) : sx.lineTo(x, y); }
+    }
+    sx.stroke();
+    // peaks
+    if (S.peaks) {
+      sx.fillStyle = '#b00'; sx.font = '10px Consolas,monospace';
+      S.peaks.forEach(p => { if (p.ppm > hi || p.ppm < lo) return; const x = xOf(p.ppm); sx.save(); sx.translate(x + 3, PT + 2); sx.rotate(Math.PI / 2); sx.fillText(p.ppm.toFixed(3), 0, 0); sx.restore(); sx.fillRect(x, PT + 42, 1, 8); });
+    }
+    if ($('phaseWin').style.display === 'block' && S.phPivot != null) { sx.strokeStyle = '#d00'; sx.beginPath(); const x = xOf(ppmOf(S.phPivot)); sx.moveTo(x, PT); sx.lineTo(x, H - PB); sx.stroke(); }
+    if (rubber) { sx.fillStyle = 'rgba(61,110,168,.15)'; sx.fillRect(Math.min(rubber.x0, rubber.x1), PT, Math.abs(rubber.x1 - rubber.x0), H - PT - PB); }
+    if (mouseX != null && mouseX > PL && mouseX < W - PR) {
+      const ppm = hi - (mouseX - PL) / pw * (hi - lo);
+      $('specInfo').textContent = `${ppm.toFixed(4)} ppm  |  ${(ppm * SF).toFixed(1)} Hz`;
+      sx.strokeStyle = 'rgba(0,0,0,.2)'; sx.beginPath(); sx.moveTo(mouseX, PT); sx.lineTo(mouseX, H - PB); sx.stroke();
+    }
+  }
+  const pxToPpm = x => { const W = sc.clientWidth, pw = W - 40; return S.view.hi - (x - 20) / pw * (S.view.hi - S.view.lo); };
+  sc.addEventListener('mousedown', e => { if (!S.spec || S.view.mode !== 'spec') return; const x = e.offsetX; if (S.calMode) { calClick(x); return; } rubber = { x0: x, x1: x }; });
+  sc.addEventListener('mousemove', e => { mouseX = e.offsetX; if (rubber) rubber.x1 = e.offsetX; S.needDraw = true; });
+  sc.addEventListener('mouseleave', () => { mouseX = null; $('specInfo').textContent = ''; S.needDraw = true; });
+  window.addEventListener('mouseup', () => {
+    if (!rubber) return;
+    if (Math.abs(rubber.x1 - rubber.x0) > 6) { const a = pxToPpm(Math.min(rubber.x0, rubber.x1)), b = pxToPpm(Math.max(rubber.x0, rubber.x1)); S.view.hi = a; S.view.lo = b; }
+    rubber = null; S.needDraw = true;
+  });
+  sc.addEventListener('dblclick', () => { if (S.spec) { fullView(); S.needDraw = true; } });
+  sc.addEventListener('wheel', e => { e.preventDefault(); S.view.y *= e.deltaY < 0 ? 1.25 : 0.8; S.needDraw = true; }, { passive: false });
+
+  async function calClick(x) {
+    S.calMode = false;
+    const p = pxToPpm(x), k0 = Math.round(kOf(p)), w = Math.max(3, Math.round(Math.abs(kOf(p) - kOf(pxToPpm(x + 8)))));
+    let bk = k0, bv = -Infinity; for (let k = k0 - w; k <= k0 + w; k++) { if (k < 0 || k >= S.spec.SI) continue; const v = phased(k); if (v > bv) { bv = v; bk = k; } }
+    const cur = ppmOf(bk);
+    const r = await modal('Calibrate', `Peak at <b>${cur.toFixed(4)} ppm</b>.<br>New value (ppm):<br><input type="text" value="0.000">`, ['Cancel', 'OK']);
+    if (r.button === 'OK' && !isNaN(parseFloat(r.value))) {
+      const nv = parseFloat(r.value), d = cur - nv; S.proc.SR += d; S.view.hi -= d; S.view.lo -= d; S.peaks = null;
+      log(`.cal: ${cur.toFixed(4)} → ${nv.toFixed(4)} ppm (SR = ${(S.proc.SR * SF).toFixed(2)} Hz)`, 'ok'); renderPars();
+    }
+    S.needDraw = true;
+  }
+
+  // phase window
+  function openPhase() {
+    if (!S.spec) { log('.ph: no spectrum — process first (efp).', 'err'); return; }
+    if (!S.spec.pk) { S.spec.pk = true; }
+    const lo = Math.round(kOf(S.view.hi)), hi = Math.round(kOf(S.view.lo));
+    S.phPivot = biggestK(Math.max(0, lo), Math.min(S.spec.SI - 1, hi));
+    S.phBackup = [S.proc.PHC0, S.proc.PHC1];
+    $('phaseWin').style.display = 'block'; syncPh(); S.needDraw = true;
+  }
+  function syncPh() { $('ph0').value = S.proc.PHC0; $('ph1').value = S.proc.PHC1; $('ph0v').value = S.proc.PHC0.toFixed(1); $('ph1v').value = S.proc.PHC1.toFixed(1); }
+  $('ph0').oninput = e => { S.proc.PHC0 = +e.target.value; syncPh(); S.needDraw = true; };
+  $('ph1').oninput = e => {
+    const nv = +e.target.value, d = nv - S.proc.PHC1, xp = S.phPivot / S.spec.SI;
+    S.proc.PHC1 = nv; S.proc.PHC0 = Math.round(wrap180(S.proc.PHC0 - d * xp) * 10) / 10; syncPh(); S.needDraw = true;
+  };
+  $('ph0v').onchange = e => { S.proc.PHC0 = wrap180(+e.target.value || 0); syncPh(); S.needDraw = true; };
+  $('ph1v').onchange = e => { S.proc.PHC1 = clamp(+e.target.value || 0, -180, 180); syncPh(); S.needDraw = true; };
+  $('phReset').onclick = () => { [S.proc.PHC0, S.proc.PHC1] = S.phBackup; syncPh(); S.needDraw = true; };
+  $('phSave').onclick = () => { $('phaseWin').style.display = 'none'; log(`.ph: PHC0 = ${S.proc.PHC0.toFixed(1)}, PHC1 = ${S.proc.PHC1.toFixed(1)} saved.`, 'ok'); renderPars(); S.needDraw = true; };
+  $('phClose').onclick = () => { $('phReset').onclick(); $('phaseWin').style.display = 'none'; S.needDraw = true; };
+
+  function peakPick() {
+    const sp = S.spec, SI = sp.SI;
+    const ns0 = Math.round(kOf(10)), ns1 = Math.round(kOf(12)); let s2 = 0, c = 0;
+    for (let k = Math.max(0, ns0); k < Math.min(SI, ns1); k++) { const v = phased(k); s2 += v * v; c++; }
+    const rms = Math.sqrt(s2 / Math.max(c, 1));
+    let mx = 0; for (let k = 0; k < SI; k++) mx = Math.max(mx, phased(k));
+    const thr = Math.max(0.02 * mx, 10 * rms), out = [];
+    for (let k = 2; k < SI - 2; k++) { const v = phased(k); if (v > thr && v >= phased(k - 1) && v > phased(k + 1) && v >= phased(k - 2) && v > phased(k + 2)) out.push({ ppm: ppmOf(k), v }); }
+    return out;
+  }
+  function snr(sigLo, sigHi) {
+    const sp = S.spec; let mx = -Infinity;
+    for (let k = Math.max(0, Math.round(kOf(sigLo))); k <= Math.min(sp.SI - 1, Math.round(kOf(sigHi))); k++) mx = Math.max(mx, phased(k));
+    const a = Math.round(kOf(9.5)), b = Math.round(kOf(12)); let s = 0, s2 = 0, c = 0;
+    for (let k = Math.max(0, a); k < Math.min(sp.SI, b); k++) { const v = phased(k); s += v; s2 += v * v; c++; }
+    const mean = s / c, rms = Math.sqrt(s2 / c - mean * mean);
+    return (mx - mean) / (2 * rms);
+  }
+
+  // ------------------------------------------------------------------ parameter tables
+  const ACQ_DEF = [
+    ['PULPROG', 'pulse program', { sel: ['zg30', 'zg', 'zgpr'] }],
+    ['NS', 'number of scans', { min: 1, max: 1024, int: 1 }], ['DS', 'dummy scans', { min: 0, max: 16, int: 1 }],
+    ['TD', 'time-domain size', { sel: [16384, 32768, 65536] }], ['SW', 'spectral width [ppm]', { min: 8, max: 40 }],
+    ['O1P', 'transmitter offset [ppm]', { min: -5, max: 15 }], ['D1', 'relaxation delay [s]', { min: 0, max: 30 }],
+    ['RG', 'receiver gain', { sel: RG_LIST }], ['SOLVENT', 'solvent', { sel: Object.keys(SOLVENTS) }], ['P1', 'f1 channel 90° pulse [µs] (calibrated)', { ro: 1 }]
+  ];
+  const PROC_DEF = [['SI', 'spectrum size', { sel: [16384, 32768, 65536] }], ['LB', 'line broadening [Hz]', { min: 0, max: 20 }],
+    ['PHC0', 'zero-order phase [deg]', { min: -360, max: 360 }], ['PHC1', 'first-order phase [deg]', { min: -360, max: 360 }], ['SR', 'spectral reference [ppm]', { ro: 1 }]];
+  function setParam(name, val, quiet) {
+    const all = [...ACQ_DEF.map(d => ['acqu', ...d]), ...PROC_DEF.map(d => ['proc', ...d])];
+    const d = all.find(x => x[1] === name); if (!d) return false;
+    const [grp, , , spec] = d;
+    if (spec.ro) { log(`${name} is read-only here.`, 'warn'); return true; }
+    let v = val;
+    if (spec.sel) {
+      const m = spec.sel.find(x => String(x).toLowerCase() === String(val).toLowerCase());
+      if (m === undefined) {
+        if (name === 'RG' && !isNaN(+val)) v = RG_LIST.reduce((a, b) => Math.abs(b - val) < Math.abs(a - val) ? b : a);
+        else { log(`${name}: allowed values: ${spec.sel.join(', ')}`, 'err'); return true; }
+      } else v = m;
+    } else {
+      v = parseFloat(val); if (isNaN(v)) { log(`${name}: not a number.`, 'err'); return true; }
+      v = clamp(v, spec.min, spec.max); if (spec.int) v = Math.round(v);
+    }
+    S[grp][name] = v; if (!quiet) log(`${name} = ${v}`); renderPars(); S.needDraw = true; return true;
+  }
+  function renderPars() {
+    const row = (grp, [n, desc, spec]) => {
+      const v = S[grp][n];
+      let inp = spec.ro ? (n === 'SR' ? (v * SF).toFixed(2) + ' Hz' : v)
+        : spec.sel ? `<select data-p="${n}">${spec.sel.map(o => `<option ${o == v ? 'selected' : ''}>${o}</option>`).join('')}</select>`
+          : `<input data-p="${n}" value="${typeof v === 'number' ? +v.toFixed(4) : v}">`;
+      return `<tr><td>${n}</td><td>${inp}</td><td>${desc}</td></tr>`;
+    };
+    const { N, swh, aq } = acqGeom();
+    $('vAcqu').innerHTML = `<table class="ptable">${ACQ_DEF.map(d => row('acqu', d)).join('')}
+      <tr><td>SFO1</td><td>${(SF + S.acqu.O1P * SF * 1e-6).toFixed(7)} MHz</td><td>transmitter frequency</td></tr>
+      <tr><td>SWH</td><td>${swh.toFixed(1)} Hz</td><td>spectral width</td></tr><tr><td>AQ</td><td>${aq.toFixed(3)} s</td><td>acquisition time</td></tr></table>`;
+    $('vProc').innerHTML = `<table class="ptable">${PROC_DEF.map(d => row('proc', d)).join('')}</table>`;
+    document.querySelectorAll('[data-p]').forEach(el => el.onchange = () => setParam(el.dataset.p, el.value));
+  }
+  function switchTab(id) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.view === id)); document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === id)); if (id === 'vSpec') resizeSpec(); if (id === 'vAssign') { renderAssign(); $('vAssign').scrollTop = 0; }
+    const lw = $('lockWin');
+    if (id === 'vAssign') { if (lw.style.display !== 'none') { lw.style.display = 'none'; S.lockHidden = true; } }
+    else if (S.lockHidden) { lw.style.display = ''; S.lockHidden = false; } }
+  document.querySelectorAll('.tab').forEach(t => t.onclick = () => switchTab(t.dataset.view));
+
+  // ------------------------------------------------------------------ report
+  function report() {
+    if (!S.data) { modal('Evaluation', 'Nothing to evaluate yet — acquire a spectrum first.'); return; }
+    const rows = [], add = (what, val, pts, max) => rows.push([what, val, pts, max]);
+    const refName = S.data.sampleId ? SAMPLES.byId[S.data.sampleId].ref : 'Reference';
+    add('Locked during acquisition', S.data.lockedAll ? 'yes' : 'NO', S.data.lockedAll ? 10 : 0, 10);
+    const lw = S.data.lw;
+    if (lw) {
+      const p = lw.w50 <= 0.6 ? 25 : lw.w50 <= 0.8 ? 22 : lw.w50 <= 1.0 ? 18 : lw.w50 <= 1.5 ? 12 : lw.w50 <= 2.5 ? 6 : 0;
+      add(refName + ' linewidth at 50 % (no LB)', lw.w50.toFixed(2) + ' Hz', p, 25);
+      const q = lw.w055 <= 6 ? 10 : lw.w055 <= 9 ? 7 : lw.w055 <= 14 ? 4 : 0;
+      add('Lineshape: width at 0.55 % / 0.11 %', lw.w055.toFixed(1) + ' / ' + lw.w011.toFixed(1) + ' Hz', q, 10);
+    } else { add('Linewidth', 'no sample!', 0, 25); add('Lineshape', '—', 0, 10); }
+    add('No ADC overflow', S.data.overflow ? 'OVERFLOW' : 'ok (RG ' + S.data.rg + ')', S.data.overflow ? 0 : 10, 10);
+    add('Probe tuned & matched', S.data.tuned ? 'yes' : 'no', S.data.tuned ? 5 : 0, 5);
+    if (S.spec) {
+      const sm = SAMPLES.byId[S.data.sampleId], g = sm && sm.groups.find(x => x.id === sm.sn);
+      if (g) {
+        const c = dssPpm() + g.ppm, sn = S.spec.pk ? snr(c - 0.05, c + 0.05) : 0;
+        add(`S/N, ${sm.struct.keys[g.id]} (${g.ppm.toFixed(2)} ppm)`, sn.toFixed(0) + ' : 1', sn >= 250 ? 15 : sn >= 150 ? 11 : sn >= 60 ? 6 : 2, 15);
+      } else add('S/N', 'no sample', 0, 15);
+      const pe = phaseErr();
+      add('Phase correction', pe < 999 ? (pe < 3 ? 'good' : pe < 8 ? 'fair' : 'poor') + ` (${pe.toFixed(1)}° off)` : 'not phased', pe < 3 ? 10 : pe < 8 ? 6 : 0, 10);
+      add('Baseline correction', S.spec.abs ? 'done' : 'not done', S.spec.abs ? 5 : 0, 5);
+      const d = Math.abs(dssPpm());
+      add(refName + ' referenced to 0 ppm', dssPpm().toFixed(4) + ' ppm', d < 0.005 ? 10 : d < 0.05 ? 5 : 0, 10);
+    } else { add('Spectrum processed', 'no — run efp', 0, 40); }
+    const tot = rows.reduce((a, r) => a + r[2], 0), max = rows.reduce((a, r) => a + r[3], 0);
+    const asg = S.data.sampleId && S.assign[S.data.sampleId];
+    const asgTxt = asg && asg.checked ? `<p>Peak assignment (not scored above): <b>${asg.right} / ${asg.total}</b> signals correct.</p>` : '<p style="color:#666">Peak assignment: not checked yet (Assign tab).</p>';
+    const grade = tot >= 90 ? 'A — facility-manager approved' : tot >= 75 ? 'B — solid spectrum' : tot >= 55 ? 'C — usable, but the NMR staff would sigh' : 'D — please read the SOP again';
+    modal('Session evaluation', `<table>${rows.map(r => `<tr><td>${r[0]}</td><td><b>${r[1]}</b></td><td style="text-align:right">${r[2]} / ${r[3]}</td></tr>`).join('')}
+      <tr><td colspan="2"><b>Total</b></td><td style="text-align:right"><b>${tot} / ${max}</b></td></tr></table><p style="font-size:14px"><b>${grade}</b></p>${asgTxt}`);
+  }
+
+  // ------------------------------------------------------------------ assignment module
+  const LCOL = ['#d9480f', '#1971c2', '#2f9e44', '#9c36b5', '#e8590c', '#0c8599', '#c2255c', '#5c940d', '#495057'];
+  const EXTRA_LBL = { solv: 'Solv', water: 'H₂O', ref: 'Ref' };
+  function structSVG(st, reveal) {
+    const sc = 46, pad = 26;
+    const pts = Object.values(st.atoms).concat(st.markers.map(([, a, dx, dy]) => [st.atoms[a][0] + dx, st.atoms[a][1] + dy]));
+    const minx = Math.min(...pts.map(p => p[0])), maxx = Math.max(...pts.map(p => p[0]));
+    const miny = Math.min(...pts.map(p => p[1])), maxy = Math.max(...pts.map(p => p[1]));
+    const X = p => (p[0] - minx) * sc + pad, Y = p => (maxy - p[1]) * sc + pad;
+    const W = (maxx - minx) * sc + 2 * pad, H = (maxy - miny) * sc + 2 * pad;
+    let o = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Segoe UI,Arial">`;
+    for (const [a, b, ord] of st.bonds) {
+      const p = st.atoms[a], q = st.atoms[b];
+      const x1 = X(p), y1 = Y(p), x2 = X(q), y2 = Y(q);
+      if (ord === 2) {
+        const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), nx = -dy / L * 3, ny = dx / L * 3;
+        o += `<line x1="${x1 + nx}" y1="${y1 + ny}" x2="${x2 + nx}" y2="${y2 + ny}" stroke="#222" stroke-width="1.6"/><line x1="${x1 - nx}" y1="${y1 - ny}" x2="${x2 - nx}" y2="${y2 - ny}" stroke="#222" stroke-width="1.6"/>`;
+      } else o += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#222" stroke-width="1.6"/>`;
+    }
+    for (const [id, lbl] of Object.entries(st.labels)) {
+      const p = st.atoms[id], w = lbl.length * 8 + 6;
+      o += `<rect x="${X(p) - w / 2}" y="${Y(p) - 10}" width="${w}" height="20" fill="#fafbfc"/><text x="${X(p)}" y="${Y(p) + 5}" text-anchor="middle" font-size="15" fill="${/^N/.test(lbl) ? '#1d4ed8' : /^(O|HO)/.test(lbl) ? '#c0262d' : '#222'}">${lbl}</text>`;
+    }
+    const letters = [...new Set(st.markers.map(m => m[0]))].sort();
+    for (const [l, a, dx, dy] of st.markers) {
+      const p = [st.atoms[a][0] + dx, st.atoms[a][1] + dy], c = LCOL[letters.indexOf(l) % LCOL.length];
+      o += `<circle cx="${X(p)}" cy="${Y(p)}" r="10" fill="${c}"/><text x="${X(p)}" y="${Y(p) + 4.5}" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">${l}</text>`;
+    }
+    return o + '</svg>';
+  }
+  function asgRows(sm) {
+    // true-ppm rows -> displayed ppm using the data's referencing
+    const off = (S.data.ref || 0) - S.proc.SR;
+    return SAMPLES.rows(sm, SF).map(r => {
+      const lo = r.lo + off, hi = r.hi + off;
+      const ka = Math.max(0, Math.floor(kOf(lo))), kb = Math.min(S.spec.SI - 1, Math.ceil(kOf(hi)));
+      let I = 0, wsum = 0, wppm = 0;
+      for (let k = ka; k <= kb; k++) { const v = phased(k); I += v; if (v > 0) { wsum += v; wppm += v * ppmOf(k); } }
+      return { ...r, dlo: lo, dhi: hi, I, center: wsum > 0 ? wppm / wsum : (lo + hi) / 2 };
+    });
+  }
+  function renderAssign() {
+    const el = $('vAssign');
+    const msg = t => el.innerHTML = `<div style="padding:30px;color:#666;font-size:14px">${t}</div>`;
+    if (!S.data || !S.data.sampleId) return msg('Acquire a spectrum of a sample first (zg).');
+    if (!S.spec || !S.spec.pk) return msg('Process the spectrum first: efp, apk (or .ph), abs.');
+    const sm = SAMPLES.byId[S.data.sampleId], st = sm.struct;
+    const rows = asgRows(sm);
+    const A = S.assign[sm.id] || (S.assign[sm.id] = { sel: rows.map(() => new Set()), normRow: rows.findIndex(r => !r.ans.has('ref') && !r.ans.has('solv') && !r.ans.has('water')), normH: 1, checked: false, reveal: false });
+    if (A.sel.length !== rows.length) A.sel = rows.map(() => new Set());
+    const letters = [...new Set(st.markers.map(m => m[0]))].sort();
+    const extras = [...new Set(SAMPLES.signals(sm).filter(g => EXTRA_LBL[g.id]).map(g => g.id))];
+    const opts = [...letters, ...extras];
+    const nf = rows[A.normRow] && rows[A.normRow].I ? A.normH / rows[A.normRow].I : 0;
+    const keyList = letters.map(l => `<b style="color:${LCOL[letters.indexOf(l) % LCOL.length]}">${l}</b> = ${st.keys[l]}`).join(', ');
+    let h = `<div class="asg"><div><div class="sbox">${structSVG(st)}</div>
+      <div class="note"><b>${sm.mol}</b> in ${SAMPLES.SOLV[sm.solvent].name}. Letters mark proton groups; equivalent protons share a letter.
+      Not every labelled proton must give a visible signal, and some rows contain solvent, water or reference signals.
+      ${A.reveal ? '<br><br>' + keyList : ''}</div></div><div>
+      <div class="asgbar">Normalise integral of row <select id="asgNorm">${rows.map((r, i) => `<option value="${i}" ${i === A.normRow ? 'selected' : ''}>${i + 1}</option>`).join('')}</select>
+      to <input id="asgNH" value="${A.normH}" style="width:40px"> H</div>
+      <table class="asgT"><tr><th>#</th><th>δ (ppm)</th><th>range</th><th>integral</th><th>assignment</th><th></th><th></th></tr>`;
+    rows.forEach((r, i) => {
+      const sel = A.sel[i], ok = A.checked && setEq(sel, r.ans);
+      const tg = opts.map(o => {
+        let c = sel.has(o) ? 'on' : '';
+        if (A.checked) { if (sel.has(o)) c = r.ans.has(o) ? 'good' : 'bad'; else if (A.reveal && r.ans.has(o)) c = 'miss'; }
+        return `<button class="tog ${c}" data-r="${i}" data-o="${o}">${EXTRA_LBL[o] || o}</button>`;
+      }).join('');
+      h += `<tr><td>${i + 1}</td><td>${r.center.toFixed(3)}</td><td>${r.dhi.toFixed(2)}–${r.dlo.toFixed(2)}</td><td>${(r.I * nf).toFixed(2)}</td><td>${tg}</td>
+        <td><button class="zoomb" data-z="${i}" title="Show this region in the spectrum">🔍</button></td><td>${A.checked ? (ok ? '✅' : '❌') : ''}</td></tr>`;
+    });
+    h += `</table><div class="asgbar"><button id="asgCheck">Check</button><button id="asgReveal">${A.reveal ? 'Hide' : 'Show'} answers</button><button id="asgClear">Clear</button>
+      <span>${A.checked ? `<b>${A.right} / ${A.total}</b> rows correct` : 'Click letters to assign (a row may hold more than one group).'}</span></div>
+      <div class="note" style="max-width:520px">Tips: integrals give proton ratios; use 🔍 to zoom and read multiplicities and J (hover the spectrum for ppm/Hz). Exchangeable OH/NH protons vanish in D₂O.</div></div></div>`;
+    el.innerHTML = h;
+    el.querySelectorAll('.tog').forEach(b => b.onclick = () => { const s2 = A.sel[+b.dataset.r]; s2.has(b.dataset.o) ? s2.delete(b.dataset.o) : s2.add(b.dataset.o); A.checked = false; SFX.click(); renderAssign(); });
+    el.querySelectorAll('[data-z]').forEach(b => b.onclick = () => { const r = rows[+b.dataset.z], pad = Math.max(0.03, (r.dhi - r.dlo) * 0.4); S.view.hi = r.dhi + pad; S.view.lo = r.dlo - pad; S.view.mode = 'spec'; S.view.y = 1; switchTab('vSpec'); });
+    $('asgNorm').onchange = e => { A.normRow = +e.target.value; renderAssign(); };
+    $('asgNH').onchange = e => { A.normH = parseFloat(e.target.value) || 1; renderAssign(); };
+    $('asgCheck').onclick = () => {
+      A.checked = true; A.total = rows.length; A.right = rows.filter((r, i) => setEq(A.sel[i], r.ans)).length; A.frac = A.right / A.total;
+      log(`Assignment check: ${A.right} / ${A.total} rows correct.`, A.right === A.total ? 'ok' : 'warn'); A.right === A.total ? SFX.chime() : SFX.beep(); renderAssign();
+    };
+    $('asgReveal').onclick = () => { A.reveal = !A.reveal; A.checked = true; A.total = rows.length; A.right = rows.filter((r, i) => setEq(A.sel[i], r.ans)).length; A.frac = A.reveal ? Math.min(A.frac || 0, A.right / A.total) : A.right / A.total; renderAssign(); };
+    $('asgClear').onclick = () => { A.sel = rows.map(() => new Set()); A.checked = false; A.reveal = false; renderAssign(); };
+  }
+  const setEq = (a, b) => a.size === b.size && [...a].every(x => b.has(x));
+
+  // ------------------------------------------------------------------ command interpreter
+  const HELP = `<table>
+  <tr><td><code>ej</code> / <code>ij</code></td><td>eject (air on) / insert (air off) sample</td></tr>
+  <tr><td><code>rsh</code></td><td>read the standard shim file</td></tr>
+  <tr><td><code>lock [solvent]</code></td><td>autolock (e.g. <code>lock D2O</code>); <code>lock -noauto D2O</code> sets up for manual locking</td></tr>
+  <tr><td><code>lockdisp</code></td><td>show the lock display</td></tr>
+  <tr><td><code>topshim</code></td><td>gradient shimming of Z1–Z5</td></tr>
+  <tr><td><code>atma</code></td><td>automatic tuning/matching</td></tr>
+  <tr><td><code>rga</code></td><td>automatic receiver gain</td></tr>
+  <tr><td><code>eda</code> / <code>edp</code></td><td>acquisition / processing parameters</td></tr>
+  <tr><td><code>ns 16</code>, <code>d1 2</code>, <code>pulprog zg30</code>…</td><td>set a parameter (no value = show)</td></tr>
+  <tr><td><code>expt</code></td><td>experiment time</td></tr>
+  <tr><td><code>zg</code> / <code>halt</code></td><td>start / stop acquisition</td></tr>
+  <tr><td><code>em</code>, <code>ft</code>, <code>efp</code></td><td>window function, Fourier transform, both + phase</td></tr>
+  <tr><td><code>apk</code>, <code>.ph</code>, <code>pk</code></td><td>auto phase, manual phase, apply stored phase</td></tr>
+  <tr><td><code>abs</code></td><td>baseline correction</td></tr>
+  <tr><td><code>.cal</code>, <code>sref</code></td><td>calibrate by clicking a peak / reference from lock</td></tr>
+  <tr><td><code>pp</code>, <code>sino</code></td><td>peak picking / signal-to-noise</td></tr>
+  <tr><td><code>fid</code>, <code>spec</code>, <code>.all</code>, <code>*2</code>, <code>/2</code></td><td>display (drag = zoom, wheel = scale, dbl-click = full)</td></tr>
+  <tr><td><code>report</code></td><td>score the session</td></tr></table>
+  <p><b>Pulse programs:</b> <code>zg30</code> (30° pulse, tolerant of short D1), <code>zg</code> (90°: needs D1 ≈ 5×T1 for quantitative integrals), <code>zgpr</code> (90° + presaturation <i>at O1P</i> — set O1P exactly on the water/solvent peak).</p>
+  <p><b>Assign tab:</b> after processing, label each signal with the proton group(s) on the structure.</p>
+  <p>Console (right): select a parameter button, then turn the knob (drag or mouse wheel) or use − / +. FINE = small steps.</p>`;
+  const cmdEl = $('cmd'), histC = []; let hi = 0;
+  cmdEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { const v = cmdEl.value.trim(); cmdEl.value = ''; if (v) { histC.push(v); hi = histC.length; run(v); } }
+    else if (e.key === 'ArrowUp') { if (hi > 0) cmdEl.value = histC[--hi]; e.preventDefault(); }
+    else if (e.key === 'ArrowDown') { if (hi < histC.length - 1) cmdEl.value = histC[++hi]; else { hi = histC.length; cmdEl.value = ''; } e.preventDefault(); }
+  });
+  document.querySelectorAll('[data-cmd]').forEach(b => b.addEventListener('click', () => { SFX.init(); run(b.dataset.cmd); }));
+
+  async function run(line) {
+    SFX.init();
+    log('> ' + line, 'cmd');
+    const [c0, ...rest] = line.trim().split(/\s+/); const c = c0.toLowerCase(), arg = rest.join(' ');
+    try {
+      switch (c) {
+        case 'help': case '?': modal('Commands', HELP); break;
+        case 'about': modal('About', 'A training simulator of a 500 MHz NMR spectrometer: lock, shim, acquire and process a 1D <sup>1</sup>H spectrum.<br><br>Not affiliated with any instrument vendor. Spectra are synthesised from a simple field-map model, not quantum mechanics.'); break;
+        case 'newgame': if ((await modal('New session', 'Reset everything and start over?', ['Cancel', 'Reset'])).button === 'Reset') location.reload(); break;
+        case 'ej': setLift(true); break;
+        case 'ij': if (S.sample === 'rack' && S.lift) log('ij: there is no sample on the air cushion — click the tube in the rack first.', 'warn'); setLift(false); break;
+        case 'rsh': {
+          if (!notBusy('rsh')) break;
+          const r = await modal('rsh', 'Shim file:<br><select><option>BBI_5mm_standard</option><option>last_user_12Nov</option></select>', ['Cancel', 'Read']);
+          if (r.button !== 'Read') break;
+          if (r.value === 'last_user_12Nov') { log('rsh: read shim file last_user_12Nov (same as current).'); break; }
+          NMR.SHIMS.forEach(s => S.shims[s] = S.rshFile[s]); S.flags.rsh = true; log('rsh: shim file BBI_5mm_standard loaded.', 'ok'); SFX.relay(); updateLED(); break;
+        }
+        case 'wsh': log('wsh: shim file written.', 'ok'); break;
+        case 'lock': if (/^off$/i.test(arg)) lockOff('Lock switched off.'); else await cmdLock(arg); break;
+        case 'lockdisp': $('lockWin').style.display = $('lockWin').style.display === 'none' ? '' : 'none'; break;
+        case 'topshim': await cmdTopshim(arg); break;
+        case 'atma': await cmdAtma(); break;
+        case 'wobb': log('wobb: manual tuning is not simulated — use atma.', 'warn'); break;
+        case 'rga': await cmdRga(); break;
+        case 'zg': case 'go': await cmdZg(); break;
+        case 'halt': case 'stop': if (S.busy && S.busy.startsWith('zg')) { S.haltReq = true; log('halt: stopping after the current scan.'); } else log('halt: nothing running.'); break;
+        case 'getprosol': log('getprosol: pulse widths and power levels loaded from probehead table.', 'ok'); break;
+        case 'ii': log('ii: interface initialised.', 'ok'); break;
+        case 'rpar': log('rpar: parameter set PROTON loaded.', 'ok'); break;
+        case 'eda': switchTab('vAcqu'); break;
+        case 'edp': switchTab('vProc'); break;
+        case 'expt': { const { aq } = acqGeom(); const t = (S.acqu.NS + S.acqu.DS) * (aq + S.acqu.D1); log(`expt: ${Math.floor(t / 60)} min ${Math.round(t % 60)} s (simulator runs ~${Math.round(1 / TIME_SCALE)}× faster)`); break; }
+        case 'em': if (!needFID('em')) break; S.emDone = true; log(`em: exponential multiplication, LB = ${S.proc.LB} Hz.`); break;
+        case 'ft': if (!needFID('ft')) break; doFT(); log('ft: done.'); switchTab('vSpec'); break;
+        case 'ef': if (!needFID('ef')) break; S.emDone = true; doFT(); log('ef: done.'); switchTab('vSpec'); break;
+        case 'efp': if (!needFID('efp')) break; S.emDone = true; doFT(); S.spec.pk = true; log(`efp: em (LB ${S.proc.LB} Hz), ft, pk (PHC0 ${S.proc.PHC0}, PHC1 ${S.proc.PHC1}).`); switchTab('vSpec'); break;
+        case 'pk': if (!S.spec) { log('pk: no spectrum.', 'err'); break; } S.spec.pk = true; log('pk: stored phase applied.'); break;
+        case 'apk': if (!S.spec) { log('apk: no spectrum — run efp first.', 'err'); break; }
+          S.proc.PHC0 = Math.round(wrap180(S.inst.th0 + gn() * 0.7) * 10) / 10; S.proc.PHC1 = Math.round((S.inst.th1 + gn() * 1.0) * 10) / 10; S.spec.pk = true;
+          log(`apk: PHC0 = ${S.proc.PHC0}, PHC1 = ${S.proc.PHC1}`, 'ok'); renderPars(); break;
+        case '.ph': openPhase(); break;
+        case 'abs': if (!S.spec) { log('abs: no spectrum.', 'err'); break; } S.spec.abs = true; log('abs: baseline corrected (polynomial).', 'ok'); break;
+        case '.cal': if (!S.spec) { log('.cal: no spectrum.', 'err'); break; } S.view.mode = 'spec'; S.calMode = true; log('.cal: click on the reference peak in the spectrum.'); break;
+        case 'sref': if (!S.spec) { log('sref: no spectrum.', 'err'); break; } if (!S.locked && !S.data.lockedAll) { log('sref: not locked — cannot reference from lock.', 'err'); break; }
+          { const old = S.proc.SR; S.proc.SR = SOLVENTS[S.lockSolv].ppm - 4.79 + 0; const d = S.proc.SR - old; S.view.hi -= d; S.view.lo -= d; log(`sref: referenced from lock solvent ${S.lockSolv}. Check DSS — lock referencing is only approximate.`); renderPars(); } break;
+        case 'pp': if (!S.spec) { log('pp: no spectrum.', 'err'); break; } S.peaks = peakPick(); log(`pp: ${S.peaks.length} peaks: ` + S.peaks.slice(0, 40).map(p => p.ppm.toFixed(3)).join(', ')); break;
+        case 'sino': if (!S.spec) { log('sino: no spectrum.', 'err'); break; } { const b = Math.max(S.view.lo, -2), a = Math.min(S.view.hi, 9.5); log(`sino: S/N = ${snr(b, a).toFixed(1)} (signal ${b.toFixed(2)}–${a.toFixed(2)} ppm, noise 9.5–12 ppm)`, 'ok'); } break;
+        case 'fid': if (!S.acc) { log('fid: no FID.', 'err'); break; } S.view.mode = 'fid'; switchTab('vSpec'); break;
+        case 'spec': S.view.mode = 'spec'; switchTab('vSpec'); break;
+        case '.all': case '.f': if (S.spec) fullView(); break;
+        case '*2': S.view.y *= 2; break;
+        case '/2': S.view.y /= 2; break;
+        case 'report': case 'eval': report(); break;
+        case 'sx': log('sx: no sample changer installed — use ej / ij.', 'warn'); break;
+        case 'new': case 'edc': log('Data set caffeine_D2O 1 1 is already open.'); break;
+        default: {
+          const P = c.toUpperCase();
+          const known = [...ACQ_DEF, ...PROC_DEF].some(d => d[0] === P);
+          if (known) { if (arg) setParam(P, arg); else log(`${P} = ${S[ACQ_DEF.some(d => d[0] === P) ? 'acqu' : 'proc'][P]}`); }
+          else { log(`${c0}: command not found. Type help.`, 'err'); SFX.beep(); }
+        }
+      }
+    } catch (err) { log('internal error: ' + err.message, 'err'); console.error(err); setBusy(null); }
+    S.needDraw = true; status(); updateLED();
+  }
+  window.__nmr = { S, run, renderAssign, asgRows, structSVG, lockCalc, curLW, report, setLift, dssPpm, phaseErr, snr, selectParam, stepParam }; // for testing
+
+  // ------------------------------------------------------------------ start
+  renderPars(); updateLED(); status(); updateSampleInfo();
+  log('Larmor 1.0 — 500.13 MHz spectrometer simulator ready.', 'ok');
+  log('Your sample (caffeine + DSS in D2O) is in the rack. Follow the checklist on the left, or type help.');
+  log('Click anywhere to enable sound.');
+  document.addEventListener('mousedown', () => SFX.init(), { once: true });
+  cmdEl.focus();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
