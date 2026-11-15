@@ -1242,7 +1242,7 @@ const SFX = (() => {
     ['tune', 'Tune & match the probe', 'Type atma (needed again after changing solvent).'],
     ['p1', 'Calibrate the 90° pulse (P1)', 'pulprog zg, ns 1, ds 0, d1 10; zg + efp + apk; zoom on a strong singlet; paropt P1 2 2 24; click the 360° null. (Quick way: pulsecal.)'],
     ['rga', 'Set the receiver gain', 'Type rga (the old RG of 2050 will overflow the ADC).'],
-    ['acq', 'Acquire the spectrum', 'Check eda (NS, D1, PULPROG), then zg. Use NS = multiple of 4 (phase cycle); short D1 with zg (90°) saturates slow-relaxing protons; avoid spinning (sidebands).'],
+    ['acq', 'Acquire the spectrum', 'Final spectrum: NS ≥ 8 (multiple of 4), e.g. pulprog zg30, ns 16, ds 2, d1 1, then zg. Use NS = multiple of 4 (phase cycle); short D1 with zg (90°) saturates slow-relaxing protons; avoid spinning (sidebands).'],
     ['proc', 'Process: FT, phase, baseline', 'efp, then apk (or .ph), then abs.'],
     ['ref', 'Reference DSS / TMS to 0.000 ppm', 'Type .cal, click the reference singlet near 0 ppm, enter 0.'],
     ['asg', 'Assign the spectrum', 'Open the Assign tab, label every signal, press Check.']
@@ -1260,10 +1260,11 @@ const SFX = (() => {
     o.tune = S.sample === 'probe' && tuneFactor() === 1;
     o.p1 = S.sample === 'probe' && Math.abs(S.acqu.P1 / p90Cal() - 1) < 0.03;
     o.rga = S.rgaDone;
-    o.acq = !!S.data && S.data.complete;
-    o.proc = !!S.spec && S.spec.pk && S.spec.abs && phaseErr() < 6;
-    o.ref = !!S.spec && Math.abs(dssPpm()) < 0.005;
-    o.asg = !!(S.data && S.assign[S.data.sampleId] && S.assign[S.data.sampleId].frac >= 0.8);
+    const full = !!S.data && !!S.data.full;
+    o.acq = full;
+    o.proc = full && !!S.spec && S.spec.pk && S.spec.abs && phaseErr() < 6;
+    o.ref = full && !!S.spec && Math.abs(dssPpm()) < 0.005;
+    o.asg = full && !!(S.assign[S.data.sampleId] && S.assign[S.data.sampleId].frac >= 0.8);
     return o;
   }
   function checkObjectives() { const o = objState(); OBJ.forEach(([id]) => $('o_' + id).classList.toggle('done', !!o[id])); }
@@ -1556,6 +1557,9 @@ const SFX = (() => {
       S.needDraw = true;
     }
     S.data.complete = S.data.scans === ns; S.data.ref = refShift(); S.data.dT = dTemp();
+    // a "real" spectrum, as opposed to a quick set-up / calibration scan
+    S.data.full = S.data.complete && ns >= 8 && ns % 4 === 0 && !!S.data.sampleId;
+    if (S.data.complete && !S.data.full) log('zg: quick spectrum (set-up / calibration). For the final spectrum use NS ≥ 8, a multiple of 4.');
     S.data.lw = S.sample === 'probe' ? NMR.lineWidths(curFD()) : null;
     if (!S.data.lockedAll && S.data.lw) { const extra = 0.4 * Math.sqrt(Math.max(1, S.data.scans)); S.data.lw = { w50: S.data.lw.w50 + extra, w055: S.data.lw.w055 + extra * 4, w011: S.data.lw.w011 + extra * 6 }; }
     setBusy(null);
@@ -1727,7 +1731,7 @@ const SFX = (() => {
 
   function peakPick() {
     const sp = S.spec, SI = sp.SI;
-    const ns0 = Math.round(kOf(10)), ns1 = Math.round(kOf(12)); let s2 = 0, c = 0;
+    const nr = noiseRegion(), ns0 = Math.round(kOf(nr[1])), ns1 = Math.round(kOf(nr[0])); let s2 = 0, c = 0;
     for (let k = Math.max(0, ns0); k < Math.min(SI, ns1); k++) { const v = phased(k); s2 += v * v; c++; }
     const rms = Math.sqrt(s2 / Math.max(c, 1));
     let mx = 0; for (let k = 0; k < SI; k++) mx = Math.max(mx, phased(k));
@@ -1735,10 +1739,20 @@ const SFX = (() => {
     for (let k = 2; k < SI - 2; k++) { const v = phased(k); if (v > thr && v >= phased(k - 1) && v > phased(k + 1) && v >= phased(k - 2) && v > phased(k + 2)) out.push({ ppm: ppmOf(k), v }); }
     return out;
   }
+  // a signal-free stretch of the spectrum (displayed ppm, [hi, lo]) for noise measurement
+  function noiseRegion() {
+    const sp = S.spec, top = ppmOf(sp.SI - 1) - 0.3, bottom = ppmOf(0) + 0.3, W = 1.5;
+    const sm = S.data && S.data.sampleId && SAMPLES.byId[S.data.sampleId];
+    const off = (S.data && S.data.ref || 0) - S.proc.SR;
+    const sig = sm ? SAMPLES.signals(sm, S.imps[sm.id]).map(g => [g.ppm + off, 0.35 + 3 * g.lw / SF]) : [];
+    const free = (hi, lo) => sig.every(([p, w]) => p + w < lo || p - w > hi);
+    for (let lo = bottom; lo + W <= top; lo += 0.25) if (free(lo + W, lo)) return [lo + W, lo];
+    return [top, top - W];
+  }
   function snr(sigLo, sigHi) {
     const sp = S.spec; let mx = -Infinity;
     for (let k = Math.max(0, Math.round(kOf(sigLo))); k <= Math.min(sp.SI - 1, Math.round(kOf(sigHi))); k++) mx = Math.max(mx, phased(k));
-    const a = Math.round(kOf(9.5)), b = Math.round(kOf(12)); let s = 0, s2 = 0, c = 0;
+    const nr = noiseRegion(), a = Math.round(kOf(nr[1])), b = Math.round(kOf(nr[0])); let s = 0, s2 = 0, c = 0;
     for (let k = Math.max(0, a); k < Math.min(sp.SI, b); k++) { const v = phased(k); s += v; s2 += v * v; c++; }
     const mean = s / c, rms = Math.sqrt(s2 / c - mean * mean);
     return (mx - mean) / (2 * rms);
@@ -2005,7 +2019,7 @@ const SFX = (() => {
         case 'sref': if (!S.spec) { log('sref: no spectrum.', 'err'); break; } if (!S.locked && !S.data.lockedAll) { log('sref: not locked — cannot reference from lock.', 'err'); break; }
           { const old = S.proc.SR; S.proc.SR = SOLVENTS[S.lockSolv].ppm - 4.79 + 0; const d = S.proc.SR - old; S.view.hi -= d; S.view.lo -= d; log(`sref: referenced from lock solvent ${S.lockSolv}. Check DSS — lock referencing is only approximate.`); renderPars(); } break;
         case 'pp': if (!S.spec) { log('pp: no spectrum.', 'err'); break; } S.peaks = peakPick(); log(`pp: ${S.peaks.length} peaks: ` + S.peaks.slice(0, 40).map(p => p.ppm.toFixed(3)).join(', ')); break;
-        case 'sino': if (!S.spec) { log('sino: no spectrum.', 'err'); break; } { const b = Math.max(S.view.lo, -2), a = Math.min(S.view.hi, 9.5); log(`sino: S/N = ${snr(b, a).toFixed(1)} (signal ${b.toFixed(2)}–${a.toFixed(2)} ppm, noise 9.5–12 ppm)`, 'ok'); } break;
+        case 'sino': if (!S.spec) { log('sino: no spectrum.', 'err'); break; } { const b = Math.max(S.view.lo, -2), a = Math.min(S.view.hi, 9.5); const nr = noiseRegion(); log(`sino: S/N = ${snr(b, a).toFixed(1)} (signal ${b.toFixed(2)}–${a.toFixed(2)} ppm, noise ${nr[0].toFixed(2)}–${nr[1].toFixed(2)} ppm)`, 'ok'); } break;
         case 'fid': if (!S.acc) { log('fid: no FID.', 'err'); break; } S.view.mode = 'fid'; switchTab('vSpec'); break;
         case 'spec': S.view.mode = 'spec'; switchTab('vSpec'); break;
         case '.all': case '.f': if (S.spec) fullView(); break;
